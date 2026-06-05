@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CASE FILE — Detective Bureau</title>
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d0f;
+    --surface: #141417;
+    --surface2: #1a1a1f;
+    --border: #2a2a35;
+    --border-bright: #3d3d50;
+    --red: #c8363a;
+    --red-dim: #7a2124;
+    --amber: #d4a843;
+    --amber-dim: #7a5c1a;
+    --green: #3d9e6a;
+    --green-dim: #1e5237;
+    --text: #e8e4d8;
+    --text-muted: #888078;
+    --text-dim: #555048;
+    --accent: #c8363a;
+    --stamp-red: rgba(200, 54, 58, 0.18);
+    --stamp-green: rgba(61, 158, 106, 0.18);
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-body: 'Courier Prime', monospace;
+    --font-stamp: 'Special Elite', serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ──── HEADER ──── */
+  .header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--red);
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .header::before {
+    content: 'CLASSIFIED';
+    position: absolute;
+    top: 50%;
+    left: -40px;
+    transform: translateY(-50%) rotate(-8deg);
+    font-family: var(--font-stamp);
+    font-size: 80px;
+    color: var(--stamp-red);
+    letter-spacing: 4px;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .header-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .logo-block {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .badge-icon {
+    width: 52px;
+    height: 52px;
+    background: var(--red);
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .logo-text h1 {
+    font-family: var(--font-display);
+    font-size: 32px;
+    letter-spacing: 3px;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .logo-text p {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .header-meta {
+    text-align: right;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  .header-meta span {
+    display: block;
+    line-height: 1.8;
+  }
+
+  .case-id-display {
+    font-family: var(--font-display);
+    font-size: 20px;
+    color: var(--amber);
+    letter-spacing: 2px;
+  }
+
+  /* ──── MAIN ──── */
+  .main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 32px 32px 64px;
+    display: grid;
+    gap: 24px;
+  }
+
+  /* ──── SECTION CARDS ──── */
+  .section-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    position: relative;
+  }
+
+  .section-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--red);
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px 14px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .section-header-icon {
+    font-size: 13px;
+    color: var(--red);
+    letter-spacing: 1px;
+    font-weight: 700;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 16px;
+    letter-spacing: 3px;
+    color: var(--text);
+  }
+
+  .section-body {
+    padding: 20px 24px;
+  }
+
+  /* ──── FORM ELEMENTS ──── */
+  .field {
+    margin-bottom: 16px;
+  }
+
+  .field:last-child { margin-bottom: 0; }
+
+  label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  input[type="text"], textarea, select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.15s;
+    resize: vertical;
+  }
+
+  input[type="text"]:focus, textarea:focus, select:focus {
+    border-color: var(--red);
+  }
+
+  select option {
+    background: var(--surface);
+  }
+
+  textarea { min-height: 80px; }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  /* ──── EVIDENCE ITEMS ──── */
+  .evidence-list {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .evidence-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--amber);
+    padding: 12px 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 12px;
+    align-items: start;
+    position: relative;
+  }
+
+  .evidence-item .ev-label {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--amber);
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+
+  .evidence-item input, .evidence-item textarea {
+    border-color: var(--border);
+    background: var(--surface2);
+    font-size: 13px;
+    padding: 7px 10px;
+  }
+
+  .evidence-num {
+    font-family: var(--font-display);
+    font-size: 20px;
+    color: var(--text-dim);
+    line-height: 1;
+    padding-top: 2px;
+    min-width: 28px;
+  }
+
+  /* ──── SUSPECT ITEMS ──── */
+  .suspect-list {
+    display: grid;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  .suspect-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--text-dim);
+    padding: 14px;
+    position: relative;
+  }
+
+  .suspect-item.prime { border-left-color: var(--red); }
+  .suspect-item.secondary { border-left-color: var(--amber); }
+  .suspect-item.cleared { border-left-color: var(--green); }
+
+  .suspect-top {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .suspect-item input, .suspect-item textarea, .suspect-item select {
+    font-size: 13px;
+    padding: 7px 10px;
+  }
+
+  .suspect-tag {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border: 1px solid;
+    display: inline-block;
+    margin-bottom: 8px;
+  }
+
+  .suspect-tag.prime { color: var(--red); border-color: var(--red-dim); background: rgba(200,54,58,0.08); }
+  .suspect-tag.secondary { color: var(--amber); border-color: var(--amber-dim); background: rgba(212,168,67,0.08); }
+  .suspect-tag.cleared { color: var(--green); border-color: var(--green-dim); background: rgba(61,158,106,0.08); }
+  .suspect-tag.unknown { color: var(--text-muted); border-color: var(--border); }
+
+  /* ──── VERDICT ──── */
+  .verdict-zone {
+    background: var(--bg);
+    border: 1px dashed var(--border-bright);
+    padding: 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .verdict-zone.has-verdict::after {
+    content: attr(data-verdict);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-12deg);
+    font-family: var(--font-stamp);
+    font-size: 52px;
+    font-weight: 700;
+    pointer-events: none;
+    white-space: nowrap;
+    opacity: 0.12;
+  }
+
+  .verdict-zone.has-verdict[data-type="solved"]::after { color: var(--green); }
+  .verdict-zone.has-verdict[data-type="unsolved"]::after { color: var(--red); }
+  .verdict-zone.has-verdict[data-type="cold"]::after { color: var(--amber); }
+
+  .verdict-inner {
+    position: relative;
+    z-index: 1;
+  }
+
+  .verdict-inner textarea {
+    background: transparent;
+    border-color: var(--border-bright);
+    min-height: 100px;
+    text-align: left;
+  }
+
+  .verdict-status-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .verdict-btn {
+    font-family: var(--font-body);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 8px 20px;
+    border: 1px solid var(--border-bright);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .verdict-btn:hover { border-color: var(--text-muted); color: var(--text); }
+  .verdict-btn.active-solved { border-color: var(--green); color: var(--green); background: rgba(61,158,106,0.1); }
+  .verdict-btn.active-unsolved { border-color: var(--red); color: var(--red); background: rgba(200,54,58,0.1); }
+  .verdict-btn.active-cold { border-color: var(--amber); color: var(--amber); background: rgba(212,168,67,0.1); }
+
+  /* ──── ACTION BUTTONS ──── */
+  .action-bar {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    font-family: var(--font-body);
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 10px 22px;
+    border: 1px solid;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-weight: 700;
+  }
+
+  .btn-primary {
+    border-color: var(--red);
+    color: var(--red);
+  }
+
+  .btn-primary:hover {
+    background: var(--red);
+    color: #fff;
+  }
+
+  .btn-secondary {
+    border-color: var(--border-bright);
+    color: var(--text-muted);
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--amber);
+    color: var(--amber);
+  }
+
+  .btn-danger {
+    border-color: var(--text-dim);
+    color: var(--text-dim);
+  }
+
+  .btn-danger:hover {
+    border-color: var(--red-dim);
+    color: var(--red);
+    background: rgba(200,54,58,0.08);
+  }
+
+  .btn-sm {
+    font-size: 10px;
+    padding: 6px 14px;
+  }
+
+  .btn-icon {
+    padding: 6px 10px;
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  /* ──── REMOVE BUTTON ──── */
+  .remove-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 4px 8px;
+    font-size: 12px;
+    transition: all 0.15s;
+    align-self: start;
+    margin-top: 2px;
+    font-family: var(--font-body);
+  }
+
+  .remove-btn:hover {
+    border-color: var(--red-dim);
+    color: var(--red);
+  }
+
+  /* ──── CASE PREVIEW ──── */
+  .preview-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 1000;
+    overflow-y: auto;
+    padding: 40px 24px;
+  }
+
+  .preview-overlay.active { display: block; }
+
+  .preview-doc {
+    max-width: 760px;
+    margin: 0 auto;
+    background: #f5f0e8;
+    color: #1a1a1a;
+    padding: 60px 64px;
+    position: relative;
+    font-family: var(--font-body);
+    box-shadow: 0 0 80px rgba(0,0,0,0.6);
+  }
+
+  .preview-doc::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(0,0,0,0.04) 28px, rgba(0,0,0,0.04) 29px);
+    pointer-events: none;
+  }
+
+  .preview-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: transparent;
+    border: 1px solid #888;
+    color: #444;
+    padding: 4px 12px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 12px;
+  }
+
+  .preview-close:hover { background: #444; color: #f5f0e8; }
+
+  .preview-inner { position: relative; z-index: 1; }
+
+  .preview-stamp {
+    position: absolute;
+    top: 40px;
+    right: 40px;
+    font-family: var(--font-stamp);
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    padding: 8px 16px;
+    border: 3px solid;
+    transform: rotate(8deg);
+    opacity: 0.7;
+    text-transform: uppercase;
+  }
+
+  .preview-stamp.solved { color: #2d7a4f; border-color: #2d7a4f; }
+  .preview-stamp.unsolved { color: #a02020; border-color: #a02020; }
+  .preview-stamp.cold { color: #8a6020; border-color: #8a6020; }
+
+  .preview-header-top {
+    text-align: center;
+    border-bottom: 2px solid #1a1a1a;
+    padding-bottom: 20px;
+    margin-bottom: 28px;
+  }
+
+  .preview-dept {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #888;
+    margin-bottom: 4px;
+  }
+
+  .preview-title {
+    font-family: var(--font-display);
+    font-size: 36px;
+    letter-spacing: 4px;
+    color: #1a1a1a;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .preview-case-num {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: #666;
+  }
+
+  .preview-section {
+    margin-bottom: 28px;
+  }
+
+  .preview-section-title {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #999;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 4px;
+    margin-bottom: 12px;
+  }
+
+  .preview-desc {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #2a2a2a;
+  }
+
+  .preview-evidence-item {
+    margin-bottom: 10px;
+    padding-left: 16px;
+    border-left: 2px solid #ccc;
+  }
+
+  .preview-evidence-item strong {
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #555;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .preview-evidence-item p {
+    font-size: 13px;
+    color: #2a2a2a;
+  }
+
+  .preview-suspect {
+    margin-bottom: 14px;
+    padding: 12px 14px;
+    border: 1px solid #ccc;
+    background: rgba(255,255,255,0.5);
+  }
+
+  .preview-suspect-name {
+    font-family: var(--font-display);
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+  }
+
+  .preview-suspect-role {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .role-prime { color: #a02020; }
+  .role-secondary { color: #7a5a10; }
+  .role-cleared { color: #1a5a30; }
+
+  .preview-suspect p {
+    font-size: 13px;
+    color: #2a2a2a;
+    line-height: 1.7;
+  }
+
+  .preview-verdict-box {
+    background: rgba(200, 54, 58, 0.06);
+    border: 1px solid rgba(200,54,58,0.3);
+    padding: 16px 20px;
+  }
+
+  /* ──── NOTIFICATIONS ──── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border-bright);
+    border-left: 3px solid var(--green);
+    padding: 12px 20px;
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: var(--green);
+    z-index: 9000;
+    transform: translateX(200%);
+    transition: transform 0.25s;
+  }
+
+  .toast.show { transform: translateX(0); }
+
+  /* ──── STATUS BAR ──── */
+  .status-bar {
+    background: var(--surface2);
+    border-top: 1px solid var(--border);
+    padding: 8px 32px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    position: sticky;
+    bottom: 0;
+    max-width: 100%;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .status-bar-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .toolbar-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--border);
+  }
+
+  /* ──── TABS ──── */
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+    padding: 0 24px;
+  }
+
+  .tab {
+    font-family: var(--font-body);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 11px 18px;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    margin-bottom: -1px;
+  }
+
+  .tab:hover { color: var(--text-muted); }
+  .tab.active { color: var(--red); border-bottom-color: var(--red); }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ──── CORNER DETAILS ──── */
+  .corner-tl, .corner-br {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-color: var(--border-bright);
+    border-style: solid;
+  }
+
+  .corner-tl {
+    top: 6px; left: 6px;
+    border-width: 1px 0 0 1px;
+  }
+
+  .corner-br {
+    bottom: 6px; right: 6px;
+    border-width: 0 1px 1px 0;
+  }
+
+  /* ──── MISC ──── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 16px 0;
+  }
+
+  .text-red { color: var(--red); }
+  .text-amber { color: var(--amber); }
+  .text-muted { color: var(--text-muted); }
+  .text-dim { color: var(--text-dim); }
+
+  .inline-flex { display: flex; align-items: center; gap: 8px; }
+  .flex-between { display: flex; justify-content: space-between; align-items: center; }
+
+  @media (max-width: 640px) {
+    .header-inner { flex-direction: column; align-items: flex-start; }
+    .field-row { grid-template-columns: 1fr; }
+    .suspect-top { grid-template-columns: 1fr; }
+    .evidence-item { grid-template-columns: 1fr; }
+    .main { padding: 16px 16px 80px; }
+    .preview-doc { padding: 32px 24px; }
+    .preview-title { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo-block">
+      <div class="badge-icon">★</div>
+      <div class="logo-text">
+        <h1>DETECTIVE BUREAU</h1>
+        <p>Case File System &nbsp;·&nbsp; JTTF FACTION</p>
+      </div>
+    </div>
+    <div class="header-meta">
+      <span class="case-id-display" id="live-case-id">CASE #0000</span>
+      <span>STATUS: <span id="live-status" style="color:var(--text-muted)">DRAFTING</span></span>
+      <span id="live-date"></span>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN FORM -->
+<div class="main">
+
+  <!-- CASE OVERVIEW -->
+  <div class="section-card">
+    <div class="corner-tl"></div>
+    <div class="corner-br"></div>
+    <div class="section-header">
+      <span class="section-header-icon">01 //</span>
+      <span class="section-title">CASE OVERVIEW</span>
+    </div>
+    <div class="section-body">
+      <div class="field-row">
+        <div class="field">
+          <label>Case Name / Title</label>
+          <input type="text" id="case-name" placeholder="e.g. The Midnight Disappearance" oninput="updateCaseId()">
+        </div>
+        <div class="field">
+          <label>Case Number</label>
+          <input type="text" id="case-number" placeholder="e.g. RBX-2024-047" oninput="updateCaseId()">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Assigned Detective</label>
+          <input type="text" id="detective-name" placeholder="Your Roblox username">
+        </div>
+        <div class="field">
+          <label>Date Filed</label>
+          <input type="text" id="case-date" placeholder="e.g. Day 3, 22:00">
+        </div>
+      </div>
+      <div class="field">
+        <label>Case Description / Summary</label>
+        <textarea id="case-desc" rows="5" placeholder="Describe what happened, where, when, and initial findings..."></textarea>
+      </div>
+      <div class="field">
+        <label>Location of Incident</label>
+        <input type="text" id="case-location" placeholder="e.g. Warehouse District, Route 7 near the old factory...">
+      </div>
+    </div>
+  </div>
+
+  <!-- EVIDENCE -->
+  <div class="section-card">
+    <div class="corner-tl"></div>
+    <div class="corner-br"></div>
+    <div class="section-header">
+      <span class="section-header-icon">02 //</span>
+      <span class="section-title">EVIDENCE LOG</span>
+      <div style="margin-left:auto">
+        <button class="btn btn-secondary btn-sm" onclick="addEvidence()">+ ADD ITEM</button>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="evidence-list" id="evidence-list"></div>
+      <p class="text-dim" id="ev-empty" style="font-size:12px;letter-spacing:1px;text-align:center;padding:12px 0;">No evidence logged — click ADD ITEM to begin</p>
+    </div>
+  </div>
+
+  <!-- SUSPECTS -->
+  <div class="section-card">
+    <div class="corner-tl"></div>
+    <div class="corner-br"></div>
+    <div class="section-header">
+      <span class="section-header-icon">03 //</span>
+      <span class="section-title">SUSPECT PROFILES</span>
+      <div style="margin-left:auto">
+        <button class="btn btn-secondary btn-sm" onclick="addSuspect()">+ ADD SUSPECT</button>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="suspect-list" id="suspect-list"></div>
+      <p class="text-dim" id="sus-empty" style="font-size:12px;letter-spacing:1px;text-align:center;padding:12px 0;">No suspects logged — click ADD SUSPECT to begin</p>
+    </div>
+  </div>
+
+  <!-- VERDICT -->
+  <div class="section-card">
+    <div class="corner-tl"></div>
+    <div class="corner-br"></div>
+    <div class="section-header">
+      <span class="section-header-icon">04 //</span>
+      <span class="section-title">VERDICT & RULING</span>
+    </div>
+    <div class="section-body">
+      <div class="verdict-zone" id="verdict-zone">
+        <div class="verdict-inner">
+          <div class="verdict-status-row">
+            <button class="verdict-btn" id="vbtn-solved" onclick="setVerdict('solved')">✓ CASE SOLVED</button>
+            <button class="verdict-btn" id="vbtn-unsolved" onclick="setVerdict('unsolved')">✕ UNSOLVED</button>
+            <button class="verdict-btn" id="vbtn-cold" onclick="setVerdict('cold')">❄ COLD CASE</button>
+          </div>
+          <div class="field">
+            <label>Primary Perpetrator(s)</label>
+            <input type="text" id="verdict-perp" placeholder="Name(s) of confirmed culprit(s)">
+          </div>
+          <div class="field">
+            <label>Verdict Summary / Final Ruling</label>
+            <textarea id="verdict-text" rows="5" placeholder="Summarize how the case was resolved, what evidence proved decisive, and what sentence or outcome was reached..."></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="action-bar">
+    <button class="btn btn-primary" onclick="previewCase()">▶ PREVIEW CASE FILE</button>
+    <button class="btn btn-secondary" onclick="exportCase()">↓ EXPORT JSON</button>
+    <button class="btn btn-secondary" onclick="copyText()">⎘ COPY TEXT</button>
+    <button class="btn btn-danger" onclick="clearAll()">✕ CLEAR ALL</button>
+  </div>
+
+</div>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <div class="status-bar-inner">
+    <div class="status-dot"></div>
+    <span>SYSTEM ONLINE</span>
+    <div class="toolbar-divider"></div>
+    <span id="sb-ev-count">0 EVIDENCE</span>
+    <div class="toolbar-divider"></div>
+    <span id="sb-sus-count">0 SUSPECTS</span>
+    <div class="toolbar-divider"></div>
+    <span id="sb-verdict">NO VERDICT</span>
+  </div>
+</div>
+
+<!-- PREVIEW OVERLAY -->
+<div class="preview-overlay" id="preview-overlay">
+  <div class="preview-doc">
+    <button class="preview-close" onclick="closePreview()">✕ CLOSE</button>
+    <div id="preview-stamp-el" class="preview-stamp" style="display:none"></div>
+    <div class="preview-inner" id="preview-inner"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+let evidenceCount = 0;
+let suspectCount = 0;
+let currentVerdict = '';
+
+function updateCaseId() {
+  const num = document.getElementById('case-number').value || '0000';
+  document.getElementById('live-case-id').textContent = 'CASE #' + num.toUpperCase();
+}
+
+// Set today's date in header
+document.getElementById('live-date').textContent = new Date().toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'}).toUpperCase();
+
+function showToast(msg, isErr) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderLeftColor = isErr ? 'var(--red)' : 'var(--green)';
+  t.style.color = isErr ? 'var(--red)' : 'var(--green)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function updateStatusBar() {
+  document.getElementById('sb-ev-count').textContent = evidenceCount + ' EVIDENCE';
+  document.getElementById('sb-sus-count').textContent = suspectCount + ' SUSPECTS';
+  document.getElementById('sb-verdict').textContent = currentVerdict ? currentVerdict.toUpperCase() : 'NO VERDICT';
+
+  const s = currentVerdict;
+  document.getElementById('live-status').textContent = s ? s.toUpperCase() : 'DRAFTING';
+  document.getElementById('live-status').style.color = s === 'solved' ? 'var(--green)' : s === 'unsolved' ? 'var(--red)' : s === 'cold' ? 'var(--amber)' : 'var(--text-muted)';
+}
+
+function addEvidence() {
+  evidenceCount++;
+  const n = evidenceCount;
+  document.getElementById('ev-empty').style.display = 'none';
+  const list = document.getElementById('evidence-list');
+  const div = document.createElement('div');
+  div.className = 'evidence-item';
+  div.id = 'ev-' + n;
+  div.innerHTML = `
+    <div>
+      <div class="ev-label">Item #${n} — Name</div>
+      <input type="text" placeholder="e.g. Taser, Dark Van, Bracelet..." id="ev-name-${n}">
+    </div>
+    <div>
+      <div class="ev-label">Description / Significance</div>
+      <textarea placeholder="What was found, where, and what it implies..." id="ev-desc-${n}" style="min-height:60px;"></textarea>
+    </div>
+    <button class="remove-btn" onclick="removeEvidence(${n})">✕</button>
+  `;
+  list.appendChild(div);
+  updateStatusBar();
+}
+
+function removeEvidence(n) {
+  const el = document.getElementById('ev-' + n);
+  if (el) el.remove();
+  evidenceCount--;
+  if (document.querySelectorAll('.evidence-item').length === 0) {
+    document.getElementById('ev-empty').style.display = 'block';
+  }
+  updateStatusBar();
+}
+
+function addSuspect() {
+  suspectCount++;
+  const n = suspectCount;
+  document.getElementById('sus-empty').style.display = 'none';
+  const list = document.getElementById('suspect-list');
+  const div = document.createElement('div');
+  div.className = 'suspect-item';
+  div.id = 'sus-' + n;
+  div.innerHTML = `
+    <div class="suspect-top">
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" placeholder="Suspect name" id="sus-name-${n}">
+      </div>
+      <div class="field">
+        <label>Role / Occupation</label>
+        <input type="text" placeholder="e.g. Coworker, Brother..." id="sus-role-${n}">
+      </div>
+      <div class="field">
+        <label>Classification</label>
+        <select id="sus-class-${n}" onchange="updateSuspectClass(${n})">
+          <option value="unknown">— Unknown —</option>
+          <option value="prime">Prime Suspect</option>
+          <option value="secondary">Secondary / Accomplice</option>
+          <option value="cleared">Cleared</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Their Claim / Statement</label>
+      <textarea placeholder="What does this suspect say happened? What's their alibi?" id="sus-claim-${n}" style="min-height:60px;"></textarea>
+    </div>
+   <div class="field">
+  <label>Notes</label>
+  <textarea placeholder="Any important details about this suspect..." id="sus-notes-${n}" style="min-height:80px;"></textarea>
+</div>
+    <div style="display:flex;justify-content:flex-end;margin-top:6px;">
+      <button class="remove-btn" onclick="removeSuspect(${n})">✕ REMOVE</button>
+    </div>
+  `;
+  list.appendChild(div);
+  updateStatusBar();
+}
+
+function updateSuspectClass(n) {
+  const cl = document.getElementById('sus-class-' + n).value;
+  const el = document.getElementById('sus-' + n);
+  el.className = 'suspect-item ' + (cl !== 'unknown' ? cl : '');
+}
+
+function removeSuspect(n) {
+  const el = document.getElementById('sus-' + n);
+  if (el) el.remove();
+  suspectCount--;
+  if (document.querySelectorAll('.suspect-item').length === 0) {
+    document.getElementById('sus-empty').style.display = 'block';
+  }
+  updateStatusBar();
+}
+
+function setVerdict(type) {
+  currentVerdict = type;
+  ['solved','unsolved','cold'].forEach(v => {
+    document.getElementById('vbtn-' + v).className = 'verdict-btn';
+  });
+  document.getElementById('vbtn-' + type).className = 'verdict-btn active-' + type;
+
+  const zone = document.getElementById('verdict-zone');
+  const labels = { solved: 'SOLVED', unsolved: 'UNSOLVED', cold: 'COLD CASE' };
+  zone.className = 'verdict-zone has-verdict';
+  zone.setAttribute('data-verdict', labels[type]);
+  zone.setAttribute('data-type', type);
+  updateStatusBar();
+}
+
+function getCaseData() {
+  const evItems = [];
+  document.querySelectorAll('.evidence-item').forEach((el) => {
+    const id = el.id.replace('ev-', '');
+    evItems.push({
+      name: (document.getElementById('ev-name-' + id) || {}).value || '',
+      desc: (document.getElementById('ev-desc-' + id) || {}).value || ''
+    });
+  });
+
+  const susItems = [];
+  document.querySelectorAll('.suspect-item').forEach((el) => {
+    const id = el.id.replace('sus-', '');
+    susItems.push({
+      name: (document.getElementById('sus-name-' + id) || {}).value || '',
+      role: (document.getElementById('sus-role-' + id) || {}).value || '',
+      classification: (document.getElementById('sus-class-' + id) || {}).value || 'unknown',
+      claim: (document.getElementById('sus-claim-' + id) || {}).value || '',
+      notes: (document.getElementById('sus-notes-' + id) || {}).value || ''
+    });
+  });
+
+  return {
+    caseName: document.getElementById('case-name').value,
+    caseNumber: document.getElementById('case-number').value,
+    detective: document.getElementById('detective-name').value,
+    date: document.getElementById('case-date').value,
+    description: document.getElementById('case-desc').value,
+    location: document.getElementById('case-location').value,
+    evidence: evItems,
+    suspects: susItems,
+    verdict: currentVerdict,
+    verdictPerp: document.getElementById('verdict-perp').value,
+    verdictText: document.getElementById('verdict-text').value
+  };
+}
+
+function previewCase() {
+  const d = getCaseData();
+  const overlay = document.getElementById('preview-overlay');
+  const inner = document.getElementById('preview-inner');
+  const stamp = document.getElementById('preview-stamp-el');
+
+  if (d.verdict) {
+    const labels = { solved: 'SOLVED', unsolved: 'UNSOLVED', cold: 'COLD CASE' };
+    stamp.textContent = labels[d.verdict];
+    stamp.className = 'preview-stamp ' + d.verdict;
+    stamp.style.display = 'block';
+  } else {
+    stamp.style.display = 'none';
+  }
+
+  let html = `
+    <div class="preview-header-top">
+      <div class="preview-dept">JTTF DETECTIVE UNIT &nbsp;·&nbsp; Official Case File</div>
+      <div class="preview-title">${d.caseName || 'UNTITLED CASE'}</div>
+      <div class="preview-case-num">Case No. ${d.caseNumber || '---'} &nbsp;|&nbsp; Det. ${d.detective || '---'} &nbsp;|&nbsp; ${d.date || '---'}</div>
+    </div>
+  `;
+
+  if (d.description || d.location) {
+    html += `<div class="preview-section">
+      <div class="preview-section-title">Incident Summary</div>
+      ${d.location ? `<p style="font-size:12px;color:#888;margin-bottom:8px;letter-spacing:1px;">LOCATION: ${d.location}</p>` : ''}
+      <p class="preview-desc">${(d.description || '').replace(/\n/g,'<br>')}</p>
+    </div>`;
+  }
+
+  if (d.evidence.length > 0) {
+    html += `<div class="preview-section">
+      <div class="preview-section-title">Evidence Log (${d.evidence.length} item${d.evidence.length !== 1 ? 's' : ''})</div>`;
+    d.evidence.forEach((ev, i) => {
+      html += `<div class="preview-evidence-item">
+        <strong>Item ${i+1} — ${ev.name || 'Unknown'}</strong>
+        <p>${(ev.desc || '').replace(/\n/g,'<br>')}</p>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (d.suspects.length > 0) {
+    html += `<div class="preview-section">
+      <div class="preview-section-title">Suspect Profiles (${d.suspects.length} individual${d.suspects.length !== 1 ? 's' : ''})</div>`;
+    d.suspects.forEach((s) => {
+      const roleLabel = s.classification === 'prime' ? 'PRIME SUSPECT' : s.classification === 'secondary' ? 'SECONDARY / ACCOMPLICE' : s.classification === 'cleared' ? 'CLEARED' : 'UNCLASSIFIED';
+      const roleClass = s.classification !== 'unknown' ? 'role-' + s.classification : '';
+      html += `<div class="preview-suspect">
+        <div class="preview-suspect-name">${s.name || 'Unnamed'}</div>
+        <div class="preview-suspect-role ${roleClass}">${roleLabel}${s.role ? ' &nbsp;·&nbsp; ' + s.role : ''}</div>
+        ${s.claim ? `<p><strong style="font-size:11px;letter-spacing:1px;">STATEMENT:</strong> ${s.claim.replace(/\n/g,'<br>')}</p>` : ''}
+        ${s.notes ? `<p style="margin-top:6px;"><strong style="font-size:11px;letter-spacing:1px;">NOTES:</strong> ${s.notes.replace(/\n/g,'<br>')}</p>` : ''}
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (d.verdict || d.verdictPerp || d.verdictText) {
+    html += `<div class="preview-section">
+      <div class="preview-section-title">Verdict & Ruling</div>
+      <div class="preview-verdict-box">
+        ${d.verdictPerp ? `<p style="margin-bottom:10px;"><strong style="font-size:11px;letter-spacing:1px;">PRIMARY PERPETRATOR:</strong> ${d.verdictPerp}</p>` : ''}
+        ${d.verdictText ? `<p>${d.verdictText.replace(/\n/g,'<br>')}</p>` : ''}
+      </div>
+    </div>`;
+  }
+
+  inner.innerHTML = html;
+  overlay.classList.add('active');
+}
+
+function closePreview() {
+  document.getElementById('preview-overlay').classList.remove('active');
+}
+
+function exportCase() {
+  const d = getCaseData();
+  const blob = new Blob([JSON.stringify(d, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'case-' + (d.caseNumber || 'file') + '.json';
+  a.click();
+  showToast('Case file exported as JSON');
+}
+
+function copyText() {
+  const d = getCaseData();
+  let out = `CASE FILE: ${d.caseName || 'Untitled'}\n`;
+  out += `Case No. ${d.caseNumber || '---'} | Det. ${d.detective || '---'} | ${d.date || '---'}\n`;
+  if (d.location) out += `Location: ${d.location}\n`;
+  out += `\n--- DESCRIPTION ---\n${d.description || '(none)'}\n`;
+  if (d.evidence.length > 0) {
+    out += `\n--- EVIDENCE (${d.evidence.length}) ---\n`;
+    d.evidence.forEach((ev, i) => {
+      out += `[${i+1}] ${ev.name || 'Unknown'}: ${ev.desc || ''}\n`;
+    });
+  }
+  if (d.suspects.length > 0) {
+    out += `\n--- SUSPECTS (${d.suspects.length}) ---\n`;
+    d.suspects.forEach(s => {
+      out += `\n${s.name || 'Unnamed'} (${s.classification || '?'})\nRole: ${s.role || '—'}\nStatement: ${s.claim || '—'}\nNotes: ${s.notes || '—'}\n`;
+    });
+  }
+  if (d.verdictPerp || d.verdictText) {
+    out += `\n--- VERDICT ---\n`;
+    if (d.verdictPerp) out += `Perpetrator: ${d.verdictPerp}\n`;
+    out += d.verdictText || '';
+  }
+  navigator.clipboard.writeText(out).then(() => showToast('Case text copied to clipboard')).catch(() => showToast('Copy failed', true));
+}
+
+function clearAll() {
+  if (!confirm('Clear all case data? This cannot be undone.')) return;
+  ['case-name','case-number','detective-name','case-date','case-desc','case-location','verdict-perp','verdict-text'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('evidence-list').innerHTML = '';
+  document.getElementById('suspect-list').innerHTML = '';
+  document.getElementById('ev-empty').style.display = 'block';
+  document.getElementById('sus-empty').style.display = 'block';
+  evidenceCount = 0;
+  suspectCount = 0;
+  currentVerdict = '';
+  ['solved','unsolved','cold'].forEach(v => {
+    document.getElementById('vbtn-' + v).className = 'verdict-btn';
+  });
+  const zone = document.getElementById('verdict-zone');
+  zone.className = 'verdict-zone';
+  zone.removeAttribute('data-verdict');
+  zone.removeAttribute('data-type');
+  document.getElementById('live-case-id').textContent = 'CASE #0000';
+  updateStatusBar();
+  showToast('Case cleared');
+}
+
+// Close preview on backdrop click
+document.getElementById('preview-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closePreview();
+});
+
+updateStatusBar();
+</script>
+</body>
+</html>
