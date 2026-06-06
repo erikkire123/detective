@@ -835,21 +835,21 @@
       <div class="field-row">
         <div class="field">
           <label>Case Name / Title</label>
-          <input type="text" id="case-name" placeholder="e.g. The Midnight Disappearance" oninput="updateCaseId()">
+          <input type="text" id="case-name" placeholder="e.g. Vanished at Dusk" oninput="updateCaseId()">
         </div>
         <div class="field">
           <label>Case Number</label>
-          <input type="text" id="case-number" placeholder="e.g. RBX-2024-047" oninput="updateCaseId()">
+          <input type="text" id="case-number" placeholder="e.g. 0001" oninput="updateCaseId()">
         </div>
       </div>
       <div class="field-row">
         <div class="field">
           <label>Assigned Detective</label>
-          <input type="text" id="detective-name" placeholder="Your Roblox username">
+          <input type="text" id="detective-name" placeholder="e.g. [SSA] Eric">
         </div>
         <div class="field">
           <label>Date Filed</label>
-          <input type="text" id="case-date" placeholder="e.g. Day 3, 22:00">
+          <input type="text" id="case-date" placeholder="e.g. 6/5/2026 6:00 PM">
         </div>
       </div>
       <div class="field">
@@ -858,7 +858,7 @@
       </div>
       <div class="field">
         <label>Location of Incident</label>
-        <input type="text" id="case-location" placeholder="e.g. Warehouse District, Route 7 near the old factory...">
+        <input type="text" id="case-location" placeholder="[OPTIONAL] If you are unsure of the exact location, leave it blank.">
       </div>
     </div>
   </div>
@@ -919,7 +919,7 @@
           </div>
           <div class="field">
             <label>Verdict Summary / Final Ruling</label>
-            <textarea id="verdict-text" rows="5" placeholder="Summarize how the case was resolved, what evidence proved decisive, and what sentence or outcome was reached..."></textarea>
+            <textarea id="verdict-text" rows="5" placeholder="Summarize how the case was resolved, what evidence proved decisive, etc..."></textarea>
           </div>
         </div>
       </div>
@@ -1005,7 +1005,7 @@ function addEvidence() {
   div.innerHTML = `
     <div>
       <div class="ev-label">Item #${n} — Name</div>
-      <input type="text" placeholder="e.g. Taser, Dark Van, Bracelet..." id="ev-name-${n}">
+      <input type="text" placeholder="e.g. Taser, Knife, Dark Van..." id="ev-name-${n}">
     </div>
     <div>
       <div class="ev-label">Description / Significance</div>
@@ -1061,7 +1061,7 @@ function addSuspect() {
     </div>
    <div class="field">
   <label>Notes</label>
-  <textarea placeholder="Any important details about this suspect..." id="sus-notes-${n}" style="min-height:80px;"></textarea>
+  <textarea placeholder="[OPTIONAL] Any important details about this suspect..." id="sus-notes-${n}" style="min-height:80px;"></textarea>
 </div>
     <div style="display:flex;justify-content:flex-end;margin-top:6px;">
       <button class="remove-btn" onclick="removeSuspect(${n})">✕ REMOVE</button>
