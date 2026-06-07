@@ -6,564 +6,326 @@
 <title>JTTF</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg:      #080a0d;
-  --bg2:     #0d1018;
-  --bg3:     #12161f;
-  --surface: #161c28;
-  --border:  rgba(255,255,255,0.06);
-  --border2: rgba(255,255,255,0.12);
-  --accent:  #3b7fff;
-  --accent2: #1a5ccc;
-  --glow:    rgba(59,127,255,0.18);
-  --text:    #dde3ee;
-  --muted:   #5c6678;
-  --muted2:  #8490a6;
-  --gold:    #c89b3c;
-  --danger:  #d94040;
-  --purple:  #b87bff;
+:root{
+  --bg:#07090c;--bg2:#0c0f16;--bg3:#111520;--surface:#151b27;
+  --border:rgba(255,255,255,0.055);--border2:rgba(255,255,255,0.11);--border3:rgba(255,255,255,0.18);
+  --accent:#4080ff;--accent-dim:rgba(64,128,255,0.15);--accent-glow:rgba(64,128,255,0.35);
+  --text:#d8e0ee;--sub:#8591a8;--muted:#4e5a6e;
+  --gold:#c9963a;--gold-dim:rgba(201,150,58,0.15);
+  --danger:#cc3f3f;--purple:#a970ff;--purple-dim:rgba(169,112,255,0.15);
+  --easing:cubic-bezier(0.16,1,0.3,1);
 }
-
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
-body{
-  background:var(--bg);
-  color:var(--text);
-  font-family:'DM Sans',sans-serif;
-  font-weight:300;
-  line-height:1.7;
-  overflow-x:hidden;
-}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:300;line-height:1.7;overflow-x:hidden;}
+::selection{background:var(--accent-dim);color:var(--text);}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--accent);border-radius:2px;}
 
-/* ─── SCROLLBAR ─── */
-::-webkit-scrollbar{width:4px;}
-::-webkit-scrollbar-track{background:var(--bg);}
-::-webkit-scrollbar-thumb{background:var(--accent2);border-radius:2px;}
+/* PROGRESS BAR */
+#progress{position:fixed;top:0;left:0;height:2px;background:var(--accent);z-index:9999;width:0%;transition:width 0.1s linear;box-shadow:0 0 8px var(--accent-glow);}
 
-/* ─── CURSOR DOT ─── */
-.cursor{
-  width:8px;height:8px;
-  background:var(--accent);
-  border-radius:50%;
-  position:fixed;top:0;left:0;
-  pointer-events:none;z-index:9999;
-  transform:translate(-50%,-50%);
-  transition:transform 0.08s,opacity 0.2s;
-}
-.cursor-ring{
-  width:28px;height:28px;
-  border:1px solid rgba(59,127,255,0.5);
-  border-radius:50%;
-  position:fixed;top:0;left:0;
-  pointer-events:none;z-index:9998;
-  transform:translate(-50%,-50%);
-  transition:transform 0.18s ease,width 0.2s,height 0.2s,opacity 0.2s;
-}
+/* CURSOR */
+#cur{position:fixed;width:6px;height:6px;background:var(--accent);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);mix-blend-mode:screen;}
+#cur-trail{position:fixed;width:32px;height:32px;border:1px solid var(--accent-glow);border-radius:50%;pointer-events:none;z-index:9997;transform:translate(-50%,-50%);transition:width 0.3s var(--easing),height 0.3s var(--easing),border-color 0.3s,opacity 0.3s;}
 
-/* ─── NAV ─── */
-nav{
-  position:fixed;top:0;left:0;right:0;z-index:500;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 3rem;height:60px;
-  background:rgba(8,10,13,0.82);
-  backdrop-filter:blur(16px);
-  border-bottom:1px solid var(--border);
-  transition:background 0.3s;
-}
-.nav-logo{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:1.4rem;letter-spacing:0.14em;
-  display:flex;align-items:center;gap:10px;
-  color:var(--text);text-decoration:none;
-}
-.nav-hex{
-  width:26px;height:26px;
+/* NAV */
+nav{position:fixed;inset:0 0 auto;z-index:600;height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 3rem;
+  background:rgba(7,9,12,0.7);backdrop-filter:blur(20px) saturate(180%);
+  border-bottom:1px solid var(--border);transition:background 0.4s;}
+.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:1.35rem;letter-spacing:0.15em;color:var(--text);text-decoration:none;display:flex;align-items:center;gap:10px;}
+.logo-badge{
+  width:24px;height:24px;position:relative;flex-shrink:0;
   clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
-  background:var(--accent);
-  display:flex;align-items:center;justify-content:center;
-  font-size:0.48rem;font-weight:700;color:#fff;letter-spacing:0;
-  animation:hexPulse 3s ease-in-out infinite;
+  background:var(--accent);display:flex;align-items:center;justify-content:center;
 }
-@keyframes hexPulse{
-  0%,100%{box-shadow:0 0 0 0 rgba(59,127,255,0.4);}
-  50%{box-shadow:0 0 12px 4px rgba(59,127,255,0.15);}
-}
+.logo-badge::after{content:'';position:absolute;inset:0;clip-path:inherit;
+  background:var(--accent);animation:badgePing 3s ease-in-out infinite;opacity:0;}
+@keyframes badgePing{0%{transform:scale(1);opacity:0.6;}100%{transform:scale(2.2);opacity:0;}}
+.nav-right{display:flex;align-items:center;gap:2.5rem;}
 .nav-links{display:flex;gap:2rem;list-style:none;}
-.nav-links a{
-  text-decoration:none;color:var(--muted2);
-  font-size:0.75rem;letter-spacing:0.14em;text-transform:uppercase;font-weight:500;
-  transition:color 0.2s;position:relative;padding-bottom:2px;
-}
-.nav-links a::after{
-  content:'';position:absolute;bottom:0;left:0;width:0;height:1px;
-  background:var(--accent);transition:width 0.25s ease;
-}
-.nav-links a:hover{color:var(--text);}
-.nav-links a:hover::after{width:100%;}
+.nav-links a{text-decoration:none;color:var(--sub);font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;font-weight:500;transition:color 0.2s;position:relative;}
+.nav-links a::after{content:'';position:absolute;bottom:-3px;left:0;height:1px;width:0;background:var(--accent);transition:width 0.25s var(--easing);}
+.nav-links a:hover,.nav-links a.active{color:var(--text);}
+.nav-links a:hover::after,.nav-links a.active::after{width:100%;}
+.nav-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:navDot 2s ease-in-out infinite;}
+@keyframes navDot{0%,100%{opacity:1;}50%{opacity:0.3;}}
 
-/* ─── TICKER ─── */
-.ticker{
-  background:var(--accent2);
-  padding:0.35rem 0;overflow:hidden;
-  border-bottom:1px solid rgba(59,127,255,0.3);
-  margin-top:60px;
-}
-.ticker-track{
-  display:flex;white-space:nowrap;
-  animation:tickerScroll 35s linear infinite;
-}
-.ticker-track span{
-  font-family:'JetBrains Mono',monospace;
-  font-size:0.65rem;letter-spacing:0.18em;
-  color:rgba(255,255,255,0.85);
-  padding:0 3rem;
-}
-.ticker-track span::before{content:'◆  ';}
-@keyframes tickerScroll{
-  from{transform:translateX(0);}
-  to{transform:translateX(-50%);}
-}
+/* TICKER */
+.ticker{height:30px;overflow:hidden;background:rgba(64,128,255,0.08);border-bottom:1px solid rgba(64,128,255,0.15);margin-top:58px;display:flex;align-items:center;}
+.ticker-inner{display:flex;white-space:nowrap;animation:tick 40s linear infinite;}
+.ticker-inner span{font-family:'JetBrains Mono',monospace;font-size:0.6rem;letter-spacing:0.2em;color:rgba(64,128,255,0.7);padding:0 2.5rem;}
+.ticker-inner span::before{content:'◆  ';}
+@keyframes tick{from{transform:translateX(0);}to{transform:translateX(-50%);}}
 
-/* ─── HERO ─── */
-.hero{
-  min-height:100vh;
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  text-align:center;padding:0 2rem;
-  position:relative;overflow:hidden;
-}
-canvas#particles{
-  position:absolute;inset:0;
-  pointer-events:none;opacity:0.55;
-}
-.scanlines{
-  position:absolute;inset:0;pointer-events:none;
-  background:repeating-linear-gradient(
-    0deg,transparent,transparent 2px,
-    rgba(0,0,0,0.08) 2px,rgba(0,0,0,0.08) 4px
-  );
-}
-.hero-glow{
-  position:absolute;
-  width:600px;height:600px;
-  background:radial-gradient(circle,rgba(59,127,255,0.1) 0%,transparent 70%);
-  border-radius:50%;
-  top:50%;left:50%;transform:translate(-50%,-50%);
-  animation:glowPulse 4s ease-in-out infinite;
-  pointer-events:none;
-}
-@keyframes glowPulse{
-  0%,100%{transform:translate(-50%,-50%) scale(1);opacity:0.6;}
-  50%{transform:translate(-50%,-50%) scale(1.15);opacity:1;}
-}
+/* HERO */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:5rem 2rem 4rem;position:relative;overflow:hidden;}
+
+/* Aurora background */
+.aurora{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+.aurora-blob{position:absolute;border-radius:50%;filter:blur(80px);animation:float 12s ease-in-out infinite;}
+.aurora-blob:nth-child(1){width:500px;height:400px;background:rgba(40,80,200,0.12);top:20%;left:15%;animation-delay:0s;animation-duration:14s;}
+.aurora-blob:nth-child(2){width:400px;height:500px;background:rgba(80,40,180,0.08);top:30%;right:10%;animation-delay:-4s;animation-duration:18s;}
+.aurora-blob:nth-child(3){width:600px;height:300px;background:rgba(20,60,160,0.1);bottom:20%;left:30%;animation-delay:-8s;animation-duration:22s;}
+@keyframes float{0%,100%{transform:translateY(0) scale(1);}33%{transform:translateY(-30px) scale(1.05);}66%{transform:translateY(15px) scale(0.97);}}
+
+/* Grid overlay */
+.hero-grid{position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(64,128,255,0.028) 1px,transparent 1px),linear-gradient(90deg,rgba(64,128,255,0.028) 1px,transparent 1px);
+  background-size:60px 60px;
+  -webkit-mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 30%,transparent 100%);}
+
+/* Vignette */
+.hero::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 100% 100% at 50% 50%,transparent 40%,rgba(7,9,12,0.7) 100%);pointer-events:none;}
+
 .hero-content{position:relative;z-index:2;}
-.hero-eyebrow{
-  font-family:'JetBrains Mono',monospace;
-  font-size:0.68rem;letter-spacing:0.3em;
-  color:var(--accent);text-transform:uppercase;
-  margin-bottom:1.5rem;
-  opacity:0;animation:fadeUp 0.9s ease 0.1s forwards;
+
+.hero-badge{
+  display:inline-flex;align-items:center;gap:0.6rem;
+  border:1px solid rgba(64,128,255,0.25);background:rgba(64,128,255,0.07);
+  padding:0.3rem 1rem;margin-bottom:2rem;
+  font-family:'JetBrains Mono',monospace;font-size:0.62rem;letter-spacing:0.25em;color:rgba(64,128,255,0.8);text-transform:uppercase;
+  opacity:0;animation:revealUp 1s var(--easing) 0.1s forwards;
 }
+.hero-badge-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:navDot 1.5s ease-in-out infinite;}
+
 .hero h1{
   font-family:'Bebas Neue',sans-serif;
-  font-size:clamp(4.5rem,13vw,10rem);
-  letter-spacing:0.06em;line-height:0.92;
+  font-size:clamp(4rem,13vw,10.5rem);
+  letter-spacing:0.05em;line-height:0.9;
   color:var(--text);
-  opacity:0;animation:fadeUp 0.9s ease 0.25s forwards;
+  opacity:0;animation:revealUp 1s var(--easing) 0.25s forwards;
 }
-.hero h1 .line-blue{color:var(--accent);}
-.hero h1 .glitch{
-  position:relative;display:inline-block;
-}
-.hero h1 .glitch::before,
-.hero h1 .glitch::after{
-  content:attr(data-text);
-  position:absolute;top:0;left:0;
-  width:100%;height:100%;
-  background:inherit;
-}
-.hero h1 .glitch::before{
-  color:#ff4aff;
-  clip-path:polygon(0 30%,100% 30%,100% 50%,0 50%);
-  transform:translateX(-3px);
-  animation:glitch1 4s infinite;
-}
-.hero h1 .glitch::after{
-  color:#00ffee;
-  clip-path:polygon(0 55%,100% 55%,100% 75%,0 75%);
-  transform:translateX(3px);
-  animation:glitch2 4s infinite;
-}
-@keyframes glitch1{
-  0%,90%,100%{opacity:0;transform:translateX(-3px);}
-  91%,93%{opacity:0.8;transform:translateX(-3px) skewX(-2deg);}
-  92%{opacity:0;transform:translateX(4px);}
-}
-@keyframes glitch2{
-  0%,90%,100%{opacity:0;transform:translateX(3px);}
-  91%,93%{opacity:0.6;transform:translateX(3px) skewX(2deg);}
-  92%{opacity:0;transform:translateX(-4px);}
-}
-.hero-sub{
-  margin-top:1.5rem;font-size:0.9rem;
-  color:var(--muted2);max-width:480px;
-  text-align:center;margin-left:auto;margin-right:auto;
-  opacity:0;animation:fadeUp 0.9s ease 0.4s forwards;
-}
-.hero-cta{
-  margin-top:2.5rem;display:flex;gap:1rem;
-  justify-content:center;
-  opacity:0;animation:fadeUp 0.9s ease 0.55s forwards;
-}
-.btn{
-  display:inline-block;padding:0.7rem 1.9rem;
-  font-size:0.74rem;font-weight:500;
-  letter-spacing:0.14em;text-transform:uppercase;
-  text-decoration:none;cursor:pointer;border:none;
-  transition:all 0.22s;position:relative;overflow:hidden;
-}
-.btn::before{
-  content:'';position:absolute;
-  top:50%;left:50%;width:0;height:0;
-  background:rgba(255,255,255,0.12);border-radius:50%;
-  transform:translate(-50%,-50%);
-  transition:width 0.4s,height 0.4s;
-}
-.btn:hover::before{width:300px;height:300px;}
-.btn-primary{background:var(--accent);color:#fff;}
-.btn-primary:hover{background:#2d6ee8;transform:translateY(-2px);}
-.btn-ghost{
-  background:transparent;color:var(--muted2);
-  border:1px solid var(--border2);
-}
-.btn-ghost:hover{color:var(--text);border-color:rgba(255,255,255,0.3);transform:translateY(-2px);}
-
-.hero-stats{
-  display:flex;gap:4rem;
-  justify-content:center;align-items:center;
-  margin-top:2.5rem;
-  opacity:0;animation:fadeUp 0.9s ease 0.7s forwards;
-  border-top:1px solid var(--border2);
-  padding-top:2rem;
-}
-.stat{text-align:center;}
-.stat-num{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:2.2rem;color:var(--text);
-  letter-spacing:0.05em;display:block;
-}
-.stat-label{
-  font-size:0.65rem;letter-spacing:0.18em;
-  color:var(--muted);text-transform:uppercase;
-}
-.stat-divider{
-  width:1px;background:var(--border2);align-self:stretch;
-}
-
-/* ─── SCROLL REVEAL ─── */
-.reveal{
-  opacity:0;transform:translateY(28px);
-  transition:opacity 0.7s ease,transform 0.7s ease;
-}
-.reveal.visible{opacity:1;transform:translateY(0);}
-.reveal-delay-1{transition-delay:0.1s;}
-.reveal-delay-2{transition-delay:0.2s;}
-.reveal-delay-3{transition-delay:0.3s;}
-.reveal-delay-4{transition-delay:0.4s;}
-
-/* ─── SECTIONS ─── */
-section{padding:6rem 3rem;}
-.section-label{
-  font-family:'JetBrains Mono',monospace;
-  font-size:0.65rem;letter-spacing:0.35em;
-  color:var(--accent);text-transform:uppercase;
-  margin-bottom:0.9rem;display:flex;align-items:center;gap:0.75rem;
-}
-.section-label::before{
-  content:'';width:20px;height:1px;background:var(--accent);
-}
-.section-title{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:clamp(2.2rem,5vw,3.5rem);
-  letter-spacing:0.05em;color:var(--text);
-  line-height:1;margin-bottom:1rem;
-}
-.section-body{
-  color:var(--muted2);max-width:540px;font-size:0.88rem;
-}
-
-/* ─── RANKS ─── */
-#ranks{background:var(--bg2);}
-.ranks-grid{margin-top:3rem;}
-.rank-row{
-  display:grid;
-  grid-template-columns:3rem 1fr auto;
-  align-items:center;gap:1.5rem;
-  padding:1rem 1rem;
-  border-bottom:1px solid var(--border);
-  cursor:default;
-  transition:background 0.2s,padding-left 0.25s,transform 0.2s;
-  position:relative;overflow:hidden;
-}
-.rank-row::before{
-  content:'';
-  position:absolute;left:0;top:0;bottom:0;width:0;
-  background:var(--accent);opacity:0.12;
-  transition:width 0.3s ease;
-}
-.rank-row:hover::before{width:100%;}
-.rank-row:hover{padding-left:1.5rem;}
-.rank-row:first-child{border-top:1px solid var(--border);}
-.rank-num{
-  font-family:'JetBrains Mono',monospace;
-  font-size:0.65rem;color:var(--muted);text-align:center;
-}
-.rank-name{font-size:0.9rem;font-weight:500;color:var(--text);}
-.rank-desc{font-size:0.76rem;color:var(--muted);margin-top:0.1rem;}
-.rank-tier{
-  font-family:'JetBrains Mono',monospace;
-  font-size:0.6rem;padding:0.22rem 0.65rem;
-  letter-spacing:0.1em;text-transform:uppercase;border:1px solid;
-}
-.tier-system{color:var(--purple);border-color:rgba(184,123,255,0.35);background:rgba(184,123,255,0.07);}
-.tier-management{color:var(--gold);border-color:rgba(200,155,60,0.35);background:rgba(200,155,60,0.07);}
-.tier-supervisor{color:var(--accent);border-color:rgba(59,127,255,0.35);background:rgba(59,127,255,0.07);}
-.tier-agent{color:var(--muted2);border-color:var(--border2);}
-.tier-entry{color:var(--muted);border-color:var(--border);}
-
-/* ─── UNITS ─── */
-#units{background:var(--bg);}
-.units-layout{
-  margin-top:3rem;
-  display:grid;grid-template-columns:repeat(3,1fr);
-  gap:1px;background:var(--border);border:1px solid var(--border);
-}
-.unit-card{
-  background:var(--bg2);padding:2rem;
-  transition:background 0.25s;
-  position:relative;overflow:hidden;
-}
-.unit-card::after{
-  content:'';
-  position:absolute;
-  bottom:-60px;right:-60px;
-  width:120px;height:120px;
-  border-radius:50%;
-  background:var(--glow);
-  transition:transform 0.4s,opacity 0.4s;
-  opacity:0;
-}
-.unit-card:hover{background:var(--surface);}
-.unit-card:hover::after{opacity:1;transform:scale(1.4);}
-.unit-card.gold::after{background:rgba(200,155,60,0.12);}
-.unit-card.purple::after{background:rgba(184,123,255,0.12);}
-.unit-abbr-box{
-  width:48px;height:48px;
-  border:1px solid var(--accent);
-  display:flex;align-items:center;justify-content:center;
-  font-family:'JetBrains Mono',monospace;
-  font-size:0.65rem;font-weight:500;color:var(--accent);
-  letter-spacing:0.05em;margin-bottom:1.5rem;
+.h1-blue{
+  color:transparent;
+  -webkit-text-stroke:1px var(--accent);
+  display:block;
   position:relative;
 }
-.unit-abbr-box::before{
-  content:'';position:absolute;
-  top:-3px;right:-3px;
-  width:6px;height:6px;
-  background:var(--accent);
-}
-.unit-abbr-box.gold{border-color:var(--gold);color:var(--gold);}
-.unit-abbr-box.gold::before{background:var(--gold);}
-.unit-abbr-box.purple{border-color:var(--purple);color:var(--purple);}
-.unit-abbr-box.purple::before{background:var(--purple);}
-.unit-title{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:1.45rem;letter-spacing:0.06em;margin-bottom:0.3rem;
-}
-.unit-abbr{
-  font-family:'JetBrains Mono',monospace;
-  font-size:0.62rem;color:var(--muted);
-  letter-spacing:0.15em;text-transform:uppercase;
-  margin-bottom:1rem;display:block;
-}
-.unit-desc{font-size:0.82rem;color:var(--muted2);line-height:1.6;margin-bottom:1.25rem;}
-.unit-req{
-  font-family:'JetBrains Mono',monospace;
-  font-size:0.66rem;color:var(--muted);
-  border-top:1px solid var(--border);padding-top:1rem;line-height:2;
-}
-.unit-req span{color:var(--accent);}
-.unit-req span.gold{color:var(--gold);}
-.unit-req span.purple{color:var(--purple);}
+.h1-fill{display:block;}
 
-/* ─── EVENTS ─── */
-#events{background:var(--bg2);}
-.events-grid{
-  margin-top:3rem;
-  display:grid;grid-template-columns:repeat(4,1fr);gap:0;
-  border:1px solid var(--border);
+/* Glitch */
+.glitch{position:relative;display:inline-block;}
+.glitch::before,.glitch::after{content:attr(data-t);position:absolute;inset:0;pointer-events:none;}
+.glitch::before{color:#f0f;clip-path:polygon(0 25%,100% 25%,100% 45%,0 45%);animation:g1 5s infinite;}
+.glitch::after{color:#0ff;clip-path:polygon(0 55%,100% 55%,100% 72%,0 72%);animation:g2 5s infinite;}
+@keyframes g1{0%,88%,100%{opacity:0;transform:translateX(0);}89%{opacity:.9;transform:translateX(-4px) skewX(-3deg);}91%{opacity:0;transform:translateX(3px);}93%{opacity:.7;transform:translateX(-2px);}}
+@keyframes g2{0%,88%,100%{opacity:0;transform:translateX(0);}90%{opacity:.7;transform:translateX(4px) skewX(2deg);}92%{opacity:0;transform:translateX(-3px);}94%{opacity:.5;transform:translateX(2px);}}
+
+.hero-sub{
+  margin:1.6rem auto 0;max-width:460px;font-size:0.88rem;color:var(--sub);letter-spacing:0.01em;
+  opacity:0;animation:revealUp 1s var(--easing) 0.4s forwards;
 }
-.event-card{
-  padding:1.75rem;
-  border-right:1px solid var(--border);
+
+.hero-cta{
+  margin-top:2.2rem;display:flex;gap:1rem;justify-content:center;
+  opacity:0;animation:revealUp 1s var(--easing) 0.55s forwards;
+}
+
+/* Magnetic buttons */
+.btn{
+  position:relative;display:inline-flex;align-items:center;gap:0.5rem;
+  padding:0.7rem 2rem;font-size:0.73rem;font-weight:500;
+  letter-spacing:0.13em;text-transform:uppercase;text-decoration:none;
+  cursor:pointer;border:none;overflow:hidden;transition:transform 0.3s var(--easing),box-shadow 0.3s;
+}
+.btn-fill{
+  background:var(--accent);color:#fff;
+  box-shadow:0 4px 24px rgba(64,128,255,0.25);
+}
+.btn-fill:hover{box-shadow:0 8px 40px rgba(64,128,255,0.45);transform:translateY(-2px);}
+.btn-outline{background:transparent;color:var(--sub);border:1px solid var(--border2);}
+.btn-outline:hover{color:var(--text);border-color:var(--border3);transform:translateY(-2px);}
+.btn-shine{position:absolute;top:0;left:-100%;width:60%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);
+  transform:skewX(-20deg);transition:left 0.5s ease;}
+.btn:hover .btn-shine{left:150%;}
+.btn-arrow{font-size:0.8rem;transition:transform 0.2s;}
+.btn:hover .btn-arrow{transform:translateX(3px);}
+
+/* Hero stats */
+.hero-stats{
+  margin-top:2.5rem;display:flex;align-items:center;gap:0;
+  border:1px solid var(--border);background:rgba(255,255,255,0.025);
+  opacity:0;animation:revealUp 1s var(--easing) 0.7s forwards;
+  overflow:hidden;
+}
+.stat{padding:1rem 2rem;text-align:center;position:relative;flex:1;}
+.stat+.stat{border-left:1px solid var(--border);}
+.stat-num{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:0.05em;color:var(--text);display:block;line-height:1;}
+.stat-label{font-family:'JetBrains Mono',monospace;font-size:0.57rem;letter-spacing:0.18em;color:var(--muted);text-transform:uppercase;margin-top:0.25rem;}
+
+/* SECTIONS */
+section{padding:7rem 4rem;}
+.s-inner{max-width:1100px;margin:0 auto;}
+.s-header{margin-bottom:3.5rem;}
+.s-tag{
+  display:inline-flex;align-items:center;gap:0.6rem;
+  font-family:'JetBrains Mono',monospace;font-size:0.6rem;letter-spacing:0.3em;color:var(--accent);text-transform:uppercase;
+  margin-bottom:0.85rem;
+}
+.s-tag::before{content:'';width:18px;height:1px;background:var(--accent);}
+.s-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(2rem,4.5vw,3.2rem);letter-spacing:0.05em;line-height:1;color:var(--text);margin-bottom:0.85rem;}
+.s-body{color:var(--sub);font-size:0.87rem;max-width:520px;}
+
+/* REVEAL */
+.rv{opacity:0;transform:translateY(32px);transition:opacity 0.8s var(--easing),transform 0.8s var(--easing);}
+.rv.in{opacity:1;transform:none;}
+.rv-d1{transition-delay:0.08s;}.rv-d2{transition-delay:0.16s;}.rv-d3{transition-delay:0.24s;}.rv-d4{transition-delay:0.32s;}.rv-d5{transition-delay:0.4s;}
+
+/* ══ RANKS ══ */
+#ranks{background:var(--bg2);}
+.rank-table{width:100%;border-collapse:collapse;}
+.rank-row{
+  display:grid;grid-template-columns:2.8rem 1fr auto;align-items:center;gap:1.5rem;
+  padding:1.1rem 1.2rem;border-bottom:1px solid var(--border);
+  cursor:default;position:relative;overflow:hidden;
+  transition:padding-left 0.35s var(--easing);
+}
+.rank-row:first-child{border-top:1px solid var(--border);}
+.rank-row::before{
+  content:'';position:absolute;inset:0;left:-100%;
+  background:linear-gradient(90deg,transparent,rgba(64,128,255,0.06),transparent);
+  transition:left 0.5s var(--easing);
+}
+.rank-row:hover::before{left:100%;}
+.rank-row:hover{padding-left:1.8rem;}
+.rank-n{font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--muted);}
+.rank-name{font-size:0.88rem;font-weight:500;color:var(--text);}
+.rank-desc{font-size:0.74rem;color:var(--muted);margin-top:0.1rem;}
+.tier{font-family:'JetBrains Mono',monospace;font-size:0.58rem;padding:0.2rem 0.6rem;letter-spacing:0.1em;text-transform:uppercase;border:1px solid;}
+.t-sys{color:var(--purple);border-color:rgba(169,112,255,.3);background:var(--purple-dim);}
+.t-mgmt{color:var(--gold);border-color:rgba(201,150,58,.3);background:var(--gold-dim);}
+.t-sup{color:var(--accent);border-color:rgba(64,128,255,.3);background:var(--accent-dim);}
+.t-agent{color:var(--sub);border-color:var(--border2);}
+.t-entry{color:var(--muted);border-color:var(--border);}
+
+/* ══ UNITS ══ */
+#units{background:var(--bg);}
+.units-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);}
+.unit-card{
+  background:var(--bg2);padding:2.2rem;
   position:relative;overflow:hidden;
-  transition:background 0.2s;
-  background:var(--bg3);
+  transition:background 0.35s;
+  transform-style:preserve-3d;
 }
-.event-card:last-child{border-right:none;}
-.event-card:hover{background:var(--surface);}
-.event-accent{
-  position:absolute;top:0;left:0;right:0;height:2px;
-  background:var(--accent);
-  transform:scaleX(0);transform-origin:left;
-  transition:transform 0.4s ease;
+.unit-card:hover{background:var(--surface);}
+.unit-card-glow{
+  position:absolute;width:180px;height:180px;border-radius:50%;
+  pointer-events:none;opacity:0;
+  transition:opacity 0.4s,transform 0.4s;
+  transform:translate(-50%,-50%);
 }
-.event-card:hover .event-accent{transform:scaleX(1);}
-.event-card.gold .event-accent{background:var(--gold);}
-.event-card.red .event-accent{background:var(--danger);}
-.event-card.purple .event-accent{background:var(--purple);}
-.event-icon{
-  width:32px;height:32px;margin-bottom:1rem;
+.unit-card:nth-child(1) .unit-card-glow{background:radial-gradient(circle,rgba(64,128,255,0.18),transparent 70%);}
+.unit-card:nth-child(2) .unit-card-glow{background:radial-gradient(circle,rgba(201,150,58,0.18),transparent 70%);}
+.unit-card:nth-child(3) .unit-card-glow{background:radial-gradient(circle,rgba(169,112,255,0.18),transparent 70%);}
+.unit-card:hover .unit-card-glow{opacity:1;}
+.unit-badge{
+  width:46px;height:46px;border:1px solid var(--accent);
   display:flex;align-items:center;justify-content:center;
-  font-family:'JetBrains Mono',monospace;
-  font-size:1.1rem;color:var(--accent);
+  font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--accent);
+  letter-spacing:0.06em;margin-bottom:1.6rem;position:relative;
 }
-.event-card.gold .event-icon{color:var(--gold);}
-.event-card.red .event-icon{color:var(--danger);}
-.event-card.purple .event-icon{color:var(--purple);}
-.event-duration{
-  font-family:'JetBrains Mono',monospace;
-  font-size:0.62rem;color:var(--muted);
-  letter-spacing:0.12em;margin-bottom:0.6rem;
-}
-.event-name{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:1.2rem;letter-spacing:0.05em;margin-bottom:0.6rem;
-}
-.event-desc{font-size:0.78rem;color:var(--muted2);line-height:1.55;}
+.unit-badge::before{content:'';position:absolute;top:-2px;right:-2px;width:5px;height:5px;background:var(--accent);}
+.unit-badge.g{border-color:var(--gold);color:var(--gold);}
+.unit-badge.g::before{background:var(--gold);}
+.unit-badge.p{border-color:var(--purple);color:var(--purple);}
+.unit-badge.p::before{background:var(--purple);}
+.unit-name{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.07em;margin-bottom:0.3rem;}
+.unit-code{font-family:'JetBrains Mono',monospace;font-size:0.6rem;letter-spacing:0.18em;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:1rem;}
+.unit-desc{font-size:0.8rem;color:var(--sub);line-height:1.65;margin-bottom:1.4rem;}
+.unit-meta{font-family:'JetBrains Mono',monospace;font-size:0.64rem;color:var(--muted);border-top:1px solid var(--border);padding-top:1rem;line-height:2.1;}
+.unit-meta b{font-weight:500;color:var(--accent);}
+.unit-meta b.g{color:var(--gold);}
+.unit-meta b.p{color:var(--purple);}
 
-/* ─── RULES ─── */
+/* ══ EVENTS ══ */
+#events{background:var(--bg2);}
+.events-grid{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--border);gap:0;}
+.ev-card{
+  padding:1.8rem 1.6rem;border-right:1px solid var(--border);
+  position:relative;overflow:hidden;background:var(--bg3);
+  transition:background 0.3s;
+}
+.ev-card:last-child{border-right:none;}
+.ev-card:hover{background:var(--surface);}
+.ev-line{position:absolute;top:0;left:0;right:0;height:2px;transform-origin:left;transform:scaleX(0);transition:transform 0.45s var(--easing);}
+.ev-card:hover .ev-line{transform:scaleX(1);}
+.ev-card.c-blue .ev-line{background:var(--accent);}
+.ev-card.c-gold .ev-line{background:var(--gold);}
+.ev-card.c-red .ev-line{background:var(--danger);}
+.ev-card.c-purple .ev-line{background:var(--purple);}
+.ev-num{font-family:'Bebas Neue',sans-serif;font-size:3.5rem;line-height:1;
+  color:rgba(255,255,255,0.03);letter-spacing:0.02em;position:absolute;right:1rem;top:0.5rem;pointer-events:none;}
+.ev-time{font-family:'JetBrains Mono',monospace;font-size:0.6rem;letter-spacing:0.18em;color:var(--muted);margin-bottom:0.8rem;}
+.ev-title{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:0.06em;margin-bottom:0.6rem;}
+.ev-desc{font-size:0.78rem;color:var(--sub);line-height:1.6;}
+
+/* ══ RULES ══ */
 #rules{background:var(--bg);}
-.rules-cols{
-  margin-top:3rem;display:grid;
-  grid-template-columns:1fr 1fr;gap:3rem;
-}
-.rules-group-title{
-  font-family:'JetBrains Mono',monospace;
-  font-size:0.65rem;letter-spacing:0.22em;
-  color:var(--muted);text-transform:uppercase;
-  margin-bottom:1.25rem;
-  border-bottom:1px solid var(--border);padding-bottom:0.75rem;
-}
-.rule-item{
-  display:flex;gap:0.75rem;
-  font-size:0.83rem;color:var(--muted2);
-  margin-bottom:0.7rem;line-height:1.5;
-  padding:0.5rem 0.6rem;
+.rules-grid{display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;margin-top:0;}
+.rules-col-title{font-family:'JetBrains Mono',monospace;font-size:0.62rem;letter-spacing:0.22em;color:var(--muted);text-transform:uppercase;padding-bottom:0.8rem;border-bottom:1px solid var(--border);margin-bottom:1.2rem;}
+.rule{
+  display:flex;gap:0.8rem;font-size:0.82rem;color:var(--sub);
+  padding:0.5rem 0.7rem;margin-bottom:0.3rem;
   border-left:2px solid transparent;
-  transition:border-color 0.2s,background 0.2s,color 0.2s;
+  transition:border-color 0.2s,background 0.2s,color 0.2s,transform 0.2s var(--easing);
 }
-.rule-item:hover{
-  border-left-color:var(--accent);
-  background:rgba(59,127,255,0.05);
-  color:var(--text);
-}
-.rule-item .bullet{
-  color:var(--accent);
-  font-family:'JetBrains Mono',monospace;
-  font-size:0.68rem;
-  margin-top:0.18rem;flex-shrink:0;
-}
+.rule:hover{border-left-color:var(--accent);background:rgba(64,128,255,0.05);color:var(--text);transform:translateX(4px);}
+.rule-dot{color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:0.6rem;margin-top:0.22rem;flex-shrink:0;}
 
-/* ─── MANAGEMENT ─── */
+/* ══ MGMT ══ */
 #management{background:var(--bg2);}
-.mgmt-grid{margin-top:3rem;display:flex;gap:1.5rem;flex-wrap:wrap;}
+.mgmt-row{display:flex;gap:1.2rem;flex-wrap:wrap;}
 .mgmt-card{
-  background:var(--bg3);
-  border:1px solid var(--border);
-  padding:1.75rem 2rem;min-width:200px;
-  position:relative;overflow:hidden;
-  transition:border-color 0.25s,transform 0.25s;
-  cursor:default;
+  background:var(--bg3);border:1px solid var(--border);
+  padding:1.8rem 2.2rem;min-width:210px;position:relative;overflow:hidden;
+  transition:border-color 0.3s,transform 0.35s var(--easing);cursor:default;
 }
-.mgmt-card:hover{
-  border-color:var(--border2);
-  transform:translateY(-3px);
+.mgmt-card:hover{border-color:var(--border2);transform:translateY(-4px);}
+.mgmt-card::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  transform:scaleX(0);transition:transform 0.45s var(--easing);
 }
-.mgmt-card::before{
-  content:'';position:absolute;
-  bottom:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent,var(--accent),transparent);
-  transform:scaleX(0);transition:transform 0.4s;
-}
-.mgmt-card:hover::before{transform:scaleX(1);}
-.mgmt-card.gold::before{background:linear-gradient(90deg,transparent,var(--gold),transparent);}
-.mgmt-card.blue::before{background:linear-gradient(90deg,transparent,var(--accent),transparent);}
-.mgmt-rank{
-  font-family:'JetBrains Mono',monospace;
-  font-size:0.6rem;letter-spacing:0.18em;
-  color:var(--muted);text-transform:uppercase;margin-bottom:0.4rem;
-}
-.mgmt-name{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:1.6rem;letter-spacing:0.07em;color:var(--text);
-}
+.mgmt-card.c-gold::after{background:var(--gold);}
+.mgmt-card.c-blue::after{background:var(--accent);}
+.mgmt-card.c-gray::after{background:var(--sub);}
+.mgmt-card:hover::after{transform:scaleX(1);}
+.mgmt-rank{font-family:'JetBrains Mono',monospace;font-size:0.58rem;letter-spacing:0.18em;color:var(--muted);text-transform:uppercase;margin-bottom:0.4rem;}
+.mgmt-name{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:0.07em;}
 .mgmt-name.gold{color:var(--gold);}
 .mgmt-name.blue{color:var(--accent);}
-.mgmt-status{
-  font-family:'JetBrains Mono',monospace;
-  font-size:0.58rem;letter-spacing:0.1em;
-  color:var(--danger);margin-top:0.3rem;text-transform:uppercase;
-  display:flex;align-items:center;gap:0.4rem;
-}
-.mgmt-status::before{
-  content:'';width:5px;height:5px;border-radius:50%;
-  background:var(--danger);
-  animation:blink 1.5s ease-in-out infinite;
-}
-@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.2;};}
+.mgmt-loa{font-family:'JetBrains Mono',monospace;font-size:0.57rem;letter-spacing:0.1em;color:var(--danger);text-transform:uppercase;margin-top:0.35rem;display:flex;align-items:center;gap:0.4rem;}
+.loa-dot{width:5px;height:5px;border-radius:50%;background:var(--danger);animation:loaBlink 1.8s ease-in-out infinite;}
+@keyframes loaBlink{0%,100%{opacity:1;}50%{opacity:0.15;}}
 
-/* ─── FOOTER ─── */
-footer{
-  border-top:1px solid var(--border);
-  padding:2.5rem 3rem;
-  display:flex;align-items:center;justify-content:space-between;
-}
-.footer-logo{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:1.1rem;letter-spacing:0.14em;color:var(--muted);
-  display:flex;align-items:center;gap:8px;
-}
+/* FOOTER */
+footer{padding:2rem 4rem;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.footer-left{font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:0.14em;color:var(--muted);display:flex;align-items:center;gap:8px;}
 .footer-links{display:flex;gap:2rem;}
-.footer-links a{
-  font-size:0.72rem;letter-spacing:0.12em;
-  text-transform:uppercase;color:var(--muted);
-  text-decoration:none;transition:color 0.2s;
-}
+.footer-links a{font-family:'JetBrains Mono',monospace;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color 0.2s;}
 .footer-links a:hover{color:var(--accent);}
-.footer-copy{font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--muted);}
+.footer-right{font-family:'JetBrains Mono',monospace;font-size:0.58rem;color:var(--muted);}
 
-/* ─── KEYFRAMES ─── */
-@keyframes fadeUp{
-  from{opacity:0;transform:translateY(22px);}
-  to{opacity:1;transform:translateY(0);}
-}
+/* KEYFRAMES */
+@keyframes revealUp{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:none;}}
 
-/* ─── RESPONSIVE ─── */
-@media(max-width:900px){
-  .units-layout{grid-template-columns:1fr;}
+/* RESPONSIVE */
+@media(max-width:960px){
+  .units-grid{grid-template-columns:1fr;}
   .events-grid{grid-template-columns:1fr 1fr;}
-  .event-card{border-right:none;border-bottom:1px solid var(--border);}
+  .ev-card{border-right:none;border-bottom:1px solid var(--border);}
 }
-@media(max-width:700px){
+@media(max-width:680px){
   nav{padding:0 1.5rem;}
   .nav-links{display:none;}
   section{padding:4rem 1.5rem;}
-  .hero-stats{gap:1.5rem;padding-top:1.5rem;}
-  .stat-divider{display:none;}
-  .rules-cols{grid-template-columns:1fr;}
+  .hero-stats{flex-direction:column;gap:0;}
+  .stat+.stat{border-left:none;border-top:1px solid var(--border);}
+  .rules-grid{grid-template-columns:1fr;}
   .events-grid{grid-template-columns:1fr;}
   footer{flex-direction:column;gap:1.5rem;text-align:center;}
   .footer-links{justify-content:center;}
@@ -572,80 +334,88 @@ footer{
 </head>
 <body>
 
-<div class="cursor" id="cursor"></div>
-<div class="cursor-ring" id="cursorRing"></div>
+<div id="progress"></div>
+<div id="cur"></div>
+<div id="cur-trail"></div>
 
 <!-- NAV -->
-<nav>
+<nav id="nav">
   <a href="#" class="nav-logo">
-    <div class="nav-hex">★</div>
+    <div class="logo-badge"></div>
     JTTF
   </a>
-  <ul class="nav-links">
-    <li><a href="#ranks">Ranks</a></li>
-    <li><a href="#units">Units</a></li>
-    <li><a href="#events">Events</a></li>
-    <li><a href="#rules">Rules</a></li>
-    <li><a href="#management">Leadership</a></li>
-  </ul>
+  <div class="nav-right">
+    <ul class="nav-links">
+      <li><a href="#ranks">Ranks</a></li>
+      <li><a href="#units">Units</a></li>
+      <li><a href="#events">Events</a></li>
+      <li><a href="#rules">Rules</a></li>
+      <li><a href="#management">Leadership</a></li>
+    </ul>
+    <div class="nav-dot"></div>
+  </div>
 </nav>
 
 <!-- TICKER -->
 <div class="ticker">
-  <div class="ticker-track" id="ticker">
-    <span>Joint Tactical Task Force</span>
-    <span>Hostage Rescue Team · HRT</span>
-    <span>Detective Division · DD</span>
-    <span>Counter Terrorism &amp; Special Ops · CTFSO</span>
-    <span>Patrol · Assault · Public Engagement · Special Events</span>
-    <span>Specialized Units Server Now Live</span>
-    <span>Follow the Chain of Command</span>
-    <span>Joint Tactical Task Force</span>
-    <span>Hostage Rescue Team · HRT</span>
-    <span>Detective Division · DD</span>
-    <span>Counter Terrorism &amp; Special Ops · CTFSO</span>
-    <span>Patrol · Assault · Public Engagement · Special Events</span>
-    <span>Specialized Units Server Now Live</span>
-    <span>Follow the Chain of Command</span>
+  <div class="ticker-inner">
+    <span>Joint Tactical Task Force</span><span>Hostage Rescue Team · HRT</span><span>Detective Division · DD</span><span>Counter Terrorism &amp; Special Ops · CTFSO</span><span>Specialized Units Server Now Live</span><span>Follow Chain of Command</span><span>Professional · Structured · Elite</span>
+    <span>Joint Tactical Task Force</span><span>Hostage Rescue Team · HRT</span><span>Detective Division · DD</span><span>Counter Terrorism &amp; Special Ops · CTFSO</span><span>Specialized Units Server Now Live</span><span>Follow Chain of Command</span><span>Professional · Structured · Elite</span>
   </div>
 </div>
 
 <!-- HERO -->
-<section class="hero">
-  <canvas id="particles"></canvas>
-  <div class="scanlines"></div>
-  <div class="hero-glow"></div>
-  <div class="hero-content">
-    <div class="hero-eyebrow">Roblox · Law Enforcement Roleplay · Est. JTTF</div>
-    <h1>
-      <span class="glitch" data-text="JOINT">JOINT</span><br>
-      <span class="line-blue">TACTICAL</span><br>
-      <span class="glitch" data-text="TASK FORCE">TASK FORCE</span>
-    </h1>
-    <p class="hero-sub">A structured, professional task force built on teamwork, chain of command, and tactical excellence.</p>
-    <div class="hero-cta">
-      <a href="#units" class="btn btn-primary">Explore Units</a>
-      <a href="#ranks" class="btn btn-ghost">Rank Structure</a>
+<section class="hero" id="home">
+  <div class="aurora">
+    <div class="aurora-blob"></div>
+    <div class="aurora-blob"></div>
+    <div class="aurora-blob"></div>
+  </div>
+  <div class="hero-grid"></div>
+  <canvas id="ptcl" style="position:absolute;inset:0;pointer-events:none;opacity:0.4;"></canvas>
+
+  <div class="hero-content" id="heroContent">
+    <div class="hero-badge">
+      <span class="hero-badge-dot"></span>
+      Roblox · Law Enforcement Roleplay
     </div>
+
+    <h1>
+      <span class="glitch h1-fill" data-t="JOINT">JOINT</span>
+      <span class="h1-blue">TACTICAL</span>
+      <span class="glitch h1-fill" data-t="TASK FORCE">TASK FORCE</span>
+    </h1>
+
+    <p class="hero-sub">A structured, professional task force built on teamwork, chain of command, and tactical excellence.</p>
+
+    <div class="hero-cta">
+      <a href="#units" class="btn btn-fill">
+        <span class="btn-shine"></span>
+        Explore Units
+        <span class="btn-arrow">→</span>
+      </a>
+      <a href="#ranks" class="btn btn-outline">
+        <span class="btn-shine"></span>
+        Rank Structure
+      </a>
+    </div>
+
     <div class="hero-stats">
       <div class="stat">
-        <span class="stat-num" data-count="10">0</span>
-        <span class="stat-label">Rank Tiers</span>
+        <span class="stat-num" data-to="10">0</span>
+        <div class="stat-label">Rank Tiers</div>
       </div>
-      <div class="stat-divider"></div>
       <div class="stat">
-        <span class="stat-num" data-count="3">0</span>
-        <span class="stat-label">Spec. Units</span>
+        <span class="stat-num" data-to="3">0</span>
+        <div class="stat-label">Spec. Units</div>
       </div>
-      <div class="stat-divider"></div>
       <div class="stat">
-        <span class="stat-num" data-count="4">0</span>
-        <span class="stat-label">Event Types</span>
+        <span class="stat-num" data-to="4">0</span>
+        <div class="stat-label">Event Types</div>
       </div>
-      <div class="stat-divider"></div>
       <div class="stat">
-        <span class="stat-num" data-count="5">0</span>
-        <span class="stat-label">Max Unit Slots</span>
+        <span class="stat-num" data-to="5">0</span>
+        <div class="stat-label">Max Unit Slots</div>
       </div>
     </div>
   </div>
@@ -653,105 +423,74 @@ footer{
 
 <!-- RANKS -->
 <section id="ranks">
-  <div class="section-label reveal">Structure</div>
-  <div class="section-title reveal reveal-delay-1">Chain of Command</div>
-  <p class="section-body reveal reveal-delay-2">All members are expected to respect the chain of command at all times. Rank determines authority, responsibilities, and event-hosting rights.</p>
-
-  <div class="ranks-grid reveal reveal-delay-3">
-    <div class="rank-row">
-      <span class="rank-num">01</span>
-      <div><div class="rank-name">Server Handler</div><div class="rank-desc">Controls server systems and permissions</div></div>
-      <span class="rank-tier tier-system">System</span>
+  <div class="s-inner">
+    <div class="s-header">
+      <div class="s-tag rv">Structure</div>
+      <div class="s-title rv rv-d1">Chain of Command</div>
+      <p class="s-body rv rv-d2">All members follow the chain at all times. Rank determines authority, responsibilities, and event-hosting rights.</p>
     </div>
-    <div class="rank-row">
-      <span class="rank-num">02</span>
-      <div><div class="rank-name">Director</div><div class="rank-desc">Overall leader and final decision maker — Jordan</div></div>
-      <span class="rank-tier tier-management">Management</span>
-    </div>
-    <div class="rank-row">
-      <span class="rank-num">03</span>
-      <div><div class="rank-name">Associate Director</div><div class="rank-desc">Handles development and Discord systems — ragebait26</div></div>
-      <span class="rank-tier tier-management">Management</span>
-    </div>
-    <div class="rank-row">
-      <span class="rank-num">04</span>
-      <div><div class="rank-name">Deputy Director</div><div class="rank-desc">Assists Director with leadership and operations — keemoforever</div></div>
-      <span class="rank-tier tier-management">Management</span>
-    </div>
-    <div class="rank-row">
-      <span class="rank-num">05</span>
-      <div><div class="rank-name">Chief Operating Officer</div><div class="rank-desc">Hosts events, manages training, answers tickets</div></div>
-      <span class="rank-tier tier-management">Management</span>
-    </div>
-    <div class="rank-row">
-      <span class="rank-num">06</span>
-      <div><div class="rank-name">Special Agent in Charge</div><div class="rank-desc">Hosts events, supervises members, runs trainings</div></div>
-      <span class="rank-tier tier-supervisor">Supervisor</span>
-    </div>
-    <div class="rank-row">
-      <span class="rank-num">07</span>
-      <div><div class="rank-name">Senior Special Agent</div><div class="rank-desc">Supervisor-in-training · assigned mentor · 1-week evaluation</div></div>
-      <span class="rank-tier tier-supervisor">Supervisor</span>
-    </div>
-    <div class="rank-row">
-      <span class="rank-num">08</span>
-      <div><div class="rank-name">Special Agent</div><div class="rank-desc">Experienced agents preparing for supervision</div></div>
-      <span class="rank-tier tier-agent">Agent</span>
-    </div>
-    <div class="rank-row">
-      <span class="rank-num">09</span>
-      <div><div class="rank-name">Agent</div><div class="rank-desc">Handles patrols, calls, and general operations</div></div>
-      <span class="rank-tier tier-agent">Agent</span>
-    </div>
-    <div class="rank-row">
-      <span class="rank-num">10</span>
-      <div><div class="rank-name">Trainee Agent</div><div class="rank-desc">Must pass training before receiving first promotion</div></div>
-      <span class="rank-tier tier-entry">Entry</span>
+    <div class="rv rv-d3">
+      <div class="rank-row"><span class="rank-n">01</span><div><div class="rank-name">Server Handler</div><div class="rank-desc">Controls server systems and permissions</div></div><span class="tier t-sys">System</span></div>
+      <div class="rank-row"><span class="rank-n">02</span><div><div class="rank-name">Director</div><div class="rank-desc">Overall leader and final decision maker — Jordan</div></div><span class="tier t-mgmt">Management</span></div>
+      <div class="rank-row"><span class="rank-n">03</span><div><div class="rank-name">Associate Director</div><div class="rank-desc">Development and Discord systems — ragebait26</div></div><span class="tier t-mgmt">Management</span></div>
+      <div class="rank-row"><span class="rank-n">04</span><div><div class="rank-name">Deputy Director</div><div class="rank-desc">Assists Director with leadership and operations — keemoforever</div></div><span class="tier t-mgmt">Management</span></div>
+      <div class="rank-row"><span class="rank-n">05</span><div><div class="rank-name">Chief Operating Officer</div><div class="rank-desc">Hosts events, manages training, answers tickets</div></div><span class="tier t-mgmt">Management</span></div>
+      <div class="rank-row"><span class="rank-n">06</span><div><div class="rank-name">Special Agent in Charge</div><div class="rank-desc">Hosts events, supervises members, runs trainings</div></div><span class="tier t-sup">Supervisor</span></div>
+      <div class="rank-row"><span class="rank-n">07</span><div><div class="rank-name">Senior Special Agent</div><div class="rank-desc">Supervisor-in-training · assigned mentor · 1-week evaluation</div></div><span class="tier t-sup">Supervisor</span></div>
+      <div class="rank-row"><span class="rank-n">08</span><div><div class="rank-name">Special Agent</div><div class="rank-desc">Experienced agents preparing for supervision</div></div><span class="tier t-agent">Agent</span></div>
+      <div class="rank-row"><span class="rank-n">09</span><div><div class="rank-name">Agent</div><div class="rank-desc">Handles patrols, calls, and general operations</div></div><span class="tier t-agent">Agent</span></div>
+      <div class="rank-row"><span class="rank-n">10</span><div><div class="rank-name">Trainee Agent</div><div class="rank-desc">Must pass training before receiving first promotion</div></div><span class="tier t-entry">Entry</span></div>
     </div>
   </div>
 </section>
 
 <!-- UNITS -->
 <section id="units">
-  <div class="section-label reveal">Specialized Divisions</div>
-  <div class="section-title reveal reveal-delay-1">Operational Units</div>
-  <p class="section-body reveal reveal-delay-2">Elite teams with limited capacity and strict entry requirements. Apply via the Specialized Units Server.</p>
-
-  <div class="units-layout">
-    <div class="unit-card reveal reveal-delay-1">
-      <div class="unit-abbr-box">HRT</div>
-      <div class="unit-title">Hostage Rescue Team</div>
-      <span class="unit-abbr">HRT · DPS &amp; TTSS</span>
-      <p class="unit-desc">Elite tactical unit specializing in hostage situations and armed threats. Operates across both DPS and Tactical SWAT Simulator.</p>
-      <div class="unit-req">
-        <div>Rank: <span>Special Agent+</span></div>
-        <div>Passes: <span>SWAT + FBI</span></div>
-        <div>Attendance: <span>2 events / week</span></div>
-        <div>Slots: <span>5 members max</span></div>
-      </div>
+  <div class="s-inner">
+    <div class="s-header">
+      <div class="s-tag rv">Specialized Divisions</div>
+      <div class="s-title rv rv-d1">Operational Units</div>
+      <p class="s-body rv rv-d2">Elite teams with strict entry requirements. Apply via the Specialized Units Server.</p>
     </div>
-    <div class="unit-card gold reveal reveal-delay-2">
-      <div class="unit-abbr-box gold">DET</div>
-      <div class="unit-title">Detective Division</div>
-      <span class="unit-abbr">DD · DPS Operations</span>
-      <p class="unit-desc">Focused on investigations, case management, bounty hunting, and advanced law enforcement operations within DPS.</p>
-      <div class="unit-req">
-        <div>Platform: <span class="gold">DPS Focused</span></div>
-        <div>Type: <span class="gold">Investigation & Cases</span></div>
-        <div>Status: <span class="gold">Newly Launched</span></div>
-        <div>Slots: <span class="gold">5–6 members</span></div>
+    <div class="units-grid">
+      <div class="unit-card rv rv-d2">
+        <div class="unit-card-glow"></div>
+        <div class="unit-badge">HRT</div>
+        <div class="unit-name">Hostage Rescue Team</div>
+        <span class="unit-code">HRT · DPS &amp; TTSS</span>
+        <p class="unit-desc">Elite tactical unit for hostage situations and armed threats. Operates across DPS and Tactical SWAT Simulator.</p>
+        <div class="unit-meta">
+          <div>Rank <b>Special Agent+</b></div>
+          <div>Passes <b>SWAT + FBI</b></div>
+          <div>Attendance <b>2 events / week</b></div>
+          <div>Slots <b>5 members max</b></div>
+        </div>
       </div>
-    </div>
-    <div class="unit-card purple reveal reveal-delay-3">
-      <div class="unit-abbr-box purple">CTSO</div>
-      <div class="unit-title">Counter Terrorism &amp; Special Ops</div>
-      <span class="unit-abbr">CTFSO · TTSS Primary</span>
-      <p class="unit-desc">High-risk tactical operations and counter-terrorism missions, primarily focused on Tactical SWAT Simulator and joint deployments.</p>
-      <div class="unit-req">
-        <div>Platform: <span class="purple">TTSS Primary</span></div>
-        <div>Type: <span class="purple">Tactical Operations</span></div>
-        <div>Status: <span class="purple">Newly Launched</span></div>
-        <div>Slots: <span class="purple">5–6 members</span></div>
+      <div class="unit-card rv rv-d3">
+        <div class="unit-card-glow"></div>
+        <div class="unit-badge g">DET</div>
+        <div class="unit-name">Detective Division</div>
+        <span class="unit-code">DD · DPS Operations</span>
+        <p class="unit-desc">Investigations, case management, bounty hunting, and advanced law enforcement within DPS.</p>
+        <div class="unit-meta">
+          <div>Platform <b class="g">DPS Focused</b></div>
+          <div>Type <b class="g">Investigation &amp; Cases</b></div>
+          <div>Status <b class="g">Newly Launched</b></div>
+          <div>Slots <b class="g">5–6 members</b></div>
+        </div>
+      </div>
+      <div class="unit-card rv rv-d4">
+        <div class="unit-card-glow"></div>
+        <div class="unit-badge p">CTSO</div>
+        <div class="unit-name">Counter Terrorism &amp; Special Ops</div>
+        <span class="unit-code">CTFSO · TTSS Primary</span>
+        <p class="unit-desc">High-risk tactical operations and counter-terrorism missions, primarily on Tactical SWAT Simulator.</p>
+        <div class="unit-meta">
+          <div>Platform <b class="p">TTSS Primary</b></div>
+          <div>Type <b class="p">Tactical Operations</b></div>
+          <div>Status <b class="p">Newly Launched</b></div>
+          <div>Slots <b class="p">5–6 members</b></div>
+        </div>
       </div>
     </div>
   </div>
@@ -759,99 +498,108 @@ footer{
 
 <!-- EVENTS -->
 <section id="events">
-  <div class="section-label reveal">Operations</div>
-  <div class="section-title reveal reveal-delay-1">Event Types</div>
-  <p class="section-body reveal reveal-delay-2">Supervisors must announce all events at least 2 hours in advance. At least 1 attendee required for an event to be official.</p>
-
-  <div class="events-grid reveal reveal-delay-3">
-    <div class="event-card">
-      <div class="event-accent"></div>
-      <div class="event-icon">⬡</div>
-      <div class="event-duration">05 — 10 MIN</div>
-      <div class="event-name">Patrol Deployment</div>
-      <p class="event-desc">Standard patrols and call responses. Members may partner up or patrol solo in separate vehicles.</p>
+  <div class="s-inner">
+    <div class="s-header">
+      <div class="s-tag rv">Operations</div>
+      <div class="s-title rv rv-d1">Event Types</div>
+      <p class="s-body rv rv-d2">Announce all events 2 hours in advance. At least 1 attendee required for official logging.</p>
     </div>
-    <div class="event-card gold">
-      <div class="event-accent"></div>
-      <div class="event-icon">⬡</div>
-      <div class="event-duration">05 — 10 MIN</div>
-      <div class="event-name">Public Engagement</div>
-      <p class="event-desc">No call responses. Members patrol and interact respectfully with the public. Stay alert for hostile players.</p>
-    </div>
-    <div class="event-card red">
-      <div class="event-accent"></div>
-      <div class="event-icon">⬡</div>
-      <div class="event-duration">10 — 15 MIN</div>
-      <div class="event-name">Assault Deployment</div>
-      <p class="event-desc">High-risk tactical operations. Full tactical uniform required. Focus only on armed threats and high-danger calls.</p>
-    </div>
-    <div class="event-card purple">
-      <div class="event-accent"></div>
-      <div class="event-icon">⬡</div>
-      <div class="event-duration">10 — 15 MIN</div>
-      <div class="event-name">Special Events</div>
-      <p class="event-desc">Unique operations — detective cases, FBI investigations, SWAT deployments, K9 missions. May require game passes.</p>
+    <div class="events-grid rv rv-d3">
+      <div class="ev-card c-blue">
+        <div class="ev-line"></div>
+        <div class="ev-num">01</div>
+        <div class="ev-time">05 — 10 MIN</div>
+        <div class="ev-title">Patrol Deployment</div>
+        <p class="ev-desc">Standard patrols and call responses. Partner up or patrol solo in separate vehicles.</p>
+      </div>
+      <div class="ev-card c-gold">
+        <div class="ev-line"></div>
+        <div class="ev-num">02</div>
+        <div class="ev-time">05 — 10 MIN</div>
+        <div class="ev-title">Public Engagement</div>
+        <p class="ev-desc">No call responses. Patrol and interact respectfully with the public. Stay alert for hostile players.</p>
+      </div>
+      <div class="ev-card c-red">
+        <div class="ev-line"></div>
+        <div class="ev-num">03</div>
+        <div class="ev-time">10 — 15 MIN</div>
+        <div class="ev-title">Assault Deployment</div>
+        <p class="ev-desc">High-risk tactical ops. Full tactical uniform required. Focus on armed threats only.</p>
+      </div>
+      <div class="ev-card c-purple">
+        <div class="ev-line"></div>
+        <div class="ev-num">04</div>
+        <div class="ev-time">10 — 15 MIN</div>
+        <div class="ev-title">Special Events</div>
+        <p class="ev-desc">Detective cases, FBI investigations, SWAT deployments, K9 missions. May need game passes.</p>
+      </div>
     </div>
   </div>
 </section>
 
 <!-- RULES -->
 <section id="rules">
-  <div class="section-label reveal">Regulations</div>
-  <div class="section-title reveal reveal-delay-1">Rules &amp; Conduct</div>
-  <p class="section-body reveal reveal-delay-2">Violations may result in warnings, demotion, or removal. Moderation is handled exclusively by the Internal Oversight Bureau.</p>
-
-  <div class="rules-cols">
-    <div class="reveal reveal-delay-2">
-      <div class="rules-group-title">General Conduct</div>
-      <div class="rule-item"><span class="bullet">—</span>Respect all members at all times without exception</div>
-      <div class="rule-item"><span class="bullet">—</span>No harassment or inappropriate content of any kind</div>
-      <div class="rule-item"><span class="bullet">—</span>Do not overcrowd active scenes</div>
-      <div class="rule-item"><span class="bullet">—</span>Always call out which scene you are responding to</div>
-      <div class="rule-item"><span class="bullet">—</span>Wait for command authorization in high-risk situations</div>
-      <div class="rule-item"><span class="bullet">—</span>Communicate clearly and work as a team at all times</div>
-      <div class="rule-item"><span class="bullet">—</span>Follow the chain of command without deviation</div>
+  <div class="s-inner">
+    <div class="s-header">
+      <div class="s-tag rv">Regulations</div>
+      <div class="s-title rv rv-d1">Rules &amp; Conduct</div>
+      <p class="s-body rv rv-d2">Violations lead to warnings, demotion, or removal. Moderation handled exclusively by the IOB.</p>
     </div>
-    <div class="reveal reveal-delay-3">
-      <div class="rules-group-title">Moderation Structure</div>
-      <div class="rule-item"><span class="bullet">—</span>Only IOB members may issue warnings, timeouts, or kicks</div>
-      <div class="rule-item"><span class="bullet">—</span>IOB members may never ban users — bans require management approval</div>
-      <div class="rule-item"><span class="bullet">—</span>Minor issues: warning → short 2–10 min timeout</div>
-      <div class="rule-item"><span class="bullet">—</span>Repeated behavior: 10–30 min timeout or kick</div>
-      <div class="rule-item"><span class="bullet">—</span>Discrimination or hate speech leads to immediate escalation</div>
-      <div class="rule-item"><span class="bullet">—</span>All moderation actions can be appealed via a ticket</div>
-      <div class="rule-item"><span class="bullet">—</span>Abuse of IOB permissions results in role removal</div>
+    <div class="rules-grid">
+      <div class="rv rv-d2">
+        <div class="rules-col-title">General Conduct</div>
+        <div class="rule"><span class="rule-dot">—</span>Respect all members at all times without exception</div>
+        <div class="rule"><span class="rule-dot">—</span>No harassment or inappropriate content of any kind</div>
+        <div class="rule"><span class="rule-dot">—</span>Do not overcrowd active scenes</div>
+        <div class="rule"><span class="rule-dot">—</span>Always call out which scene you are responding to</div>
+        <div class="rule"><span class="rule-dot">—</span>Wait for command authorization in high-risk situations</div>
+        <div class="rule"><span class="rule-dot">—</span>Communicate clearly and work as a team</div>
+        <div class="rule"><span class="rule-dot">—</span>Follow the chain of command without deviation</div>
+      </div>
+      <div class="rv rv-d3">
+        <div class="rules-col-title">Moderation Structure</div>
+        <div class="rule"><span class="rule-dot">—</span>Only IOB members may issue warnings, timeouts, or kicks</div>
+        <div class="rule"><span class="rule-dot">—</span>IOB members may never ban — bans require management only</div>
+        <div class="rule"><span class="rule-dot">—</span>Minor issues: warning → short 2–10 min timeout</div>
+        <div class="rule"><span class="rule-dot">—</span>Repeated behavior: 10–30 min timeout or kick</div>
+        <div class="rule"><span class="rule-dot">—</span>Discrimination or hate speech: immediate escalation</div>
+        <div class="rule"><span class="rule-dot">—</span>All actions can be appealed by opening a ticket</div>
+        <div class="rule"><span class="rule-dot">—</span>Abuse of IOB permissions results in role removal</div>
+      </div>
     </div>
   </div>
 </section>
 
 <!-- MANAGEMENT -->
 <section id="management">
-  <div class="section-label reveal">Leadership</div>
-  <div class="section-title reveal reveal-delay-1">Management Team</div>
-  <p class="section-body reveal reveal-delay-2">JTTF's leadership team oversees all in-game operations, Discord management, and organizational structure.</p>
-
-  <div class="mgmt-grid">
-    <div class="mgmt-card gold reveal reveal-delay-2">
-      <div class="mgmt-rank">Director</div>
-      <div class="mgmt-name gold">Jordan</div>
+  <div class="s-inner">
+    <div class="s-header">
+      <div class="s-tag rv">Leadership</div>
+      <div class="s-title rv rv-d1">Management Team</div>
+      <p class="s-body rv rv-d2">JTTF's leadership oversees all in-game operations, Discord management, and organizational structure.</p>
     </div>
-    <div class="mgmt-card reveal reveal-delay-3">
-      <div class="mgmt-rank">Associate Director</div>
-      <div class="mgmt-name blue">ragebait26</div>
-    </div>
-    <div class="mgmt-card reveal reveal-delay-4">
-      <div class="mgmt-rank">Deputy Director</div>
-      <div class="mgmt-name">keemoforever</div>
-      <div class="mgmt-status">On Leave of Absence</div>
+    <div class="mgmt-row">
+      <div class="mgmt-card c-gold rv rv-d2">
+        <div class="mgmt-rank">Director</div>
+        <div class="mgmt-name gold">Jordan</div>
+      </div>
+      <div class="mgmt-card c-blue rv rv-d3">
+        <div class="mgmt-rank">Associate Director</div>
+        <div class="mgmt-name blue">ragebait26</div>
+      </div>
+      <div class="mgmt-card c-gray rv rv-d4">
+        <div class="mgmt-rank">Deputy Director</div>
+        <div class="mgmt-name">keemoforever</div>
+        <div class="mgmt-loa"><span class="loa-dot"></span>On Leave of Absence</div>
+      </div>
     </div>
   </div>
 </section>
 
 <!-- FOOTER -->
 <footer>
-  <div class="footer-logo">
-    <div class="nav-hex" style="width:20px;height:20px;font-size:0.4rem;">★</div>
+  <div class="footer-left">
+    <div class="logo-badge" style="width:18px;height:18px;"></div>
     JTTF
   </div>
   <div class="footer-links">
@@ -859,96 +607,100 @@ footer{
     <a href="#units">Units</a>
     <a href="#events">Events</a>
     <a href="#rules">Rules</a>
+    <a href="#management">Leadership</a>
   </div>
-  <div class="footer-copy">Joint Tactical Task Force · Roblox Roleplay</div>
+  <div class="footer-right">Joint Tactical Task Force · Roblox Roleplay</div>
 </footer>
 
 <script>
-/* ─── CURSOR ─── */
-const cursor=document.getElementById('cursor');
-const ring=document.getElementById('cursorRing');
-let mx=0,my=0,rx=0,ry=0;
-document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cursor.style.left=mx+'px';cursor.style.top=my+'px';});
-(function animRing(){rx+=(mx-rx)*0.12;ry+=(my-ry)*0.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(animRing);})();
-document.querySelectorAll('a,.btn,.rank-row,.unit-card,.event-card,.mgmt-card,.rule-item').forEach(el=>{
-  el.addEventListener('mouseenter',()=>{ring.style.width='44px';ring.style.height='44px';ring.style.borderColor='rgba(59,127,255,0.8)';});
-  el.addEventListener('mouseleave',()=>{ring.style.width='28px';ring.style.height='28px';ring.style.borderColor='rgba(59,127,255,0.5)';});
+/* ── PROGRESS BAR ── */
+const prog=document.getElementById('progress');
+window.addEventListener('scroll',()=>{
+  const pct=(window.scrollY/(document.body.scrollHeight-window.innerHeight))*100;
+  prog.style.width=pct+'%';
+},{passive:true});
+
+/* ── CURSOR ── */
+const cur=document.getElementById('cur'),trail=document.getElementById('cur-trail');
+let mx=0,my=0,tx=0,ty=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px';});
+(function loop(){tx+=(mx-tx)*0.1;ty+=(my-ty)*0.1;trail.style.left=tx+'px';trail.style.top=ty+'px';requestAnimationFrame(loop);})();
+document.querySelectorAll('a,.btn,.rank-row,.unit-card,.ev-card,.mgmt-card,.rule').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{trail.style.width='48px';trail.style.height='48px';trail.style.borderColor='rgba(64,128,255,0.7)';});
+  el.addEventListener('mouseleave',()=>{trail.style.width='32px';trail.style.height='32px';trail.style.borderColor='rgba(64,128,255,0.35)';});
 });
 
-/* ─── PARTICLES ─── */
-const canvas=document.getElementById('particles');
-const ctx=canvas.getContext('2d');
-let W,H,particles=[];
-function resize(){W=canvas.width=canvas.offsetWidth;H=canvas.height=canvas.offsetHeight;}
-resize();window.addEventListener('resize',resize);
-for(let i=0;i<70;i++){
-  particles.push({
-    x:Math.random()*2000,y:Math.random()*900,
-    vx:(Math.random()-0.5)*0.25,vy:(Math.random()-0.5)*0.25,
-    r:Math.random()*1.4+0.4,
-    alpha:Math.random()*0.5+0.1
-  });
-}
-function drawParticles(){
-  ctx.clearRect(0,0,W,H);
-  particles.forEach(p=>{
+/* ── PARTICLES ── */
+const c=document.getElementById('ptcl'),cx=c.getContext('2d');
+let W,H;
+function rsz(){W=c.width=c.offsetWidth;H=c.height=c.offsetHeight;}
+rsz();window.addEventListener('resize',rsz,{passive:true});
+const pts=Array.from({length:60},()=>({x:Math.random()*W||Math.random()*1400,y:Math.random()*H||Math.random()*800,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,r:Math.random()*1.2+.3,a:Math.random()*.45+.1}));
+(function draw(){
+  cx.clearRect(0,0,W,H);
+  pts.forEach(p=>{
     p.x+=p.vx;p.y+=p.vy;
     if(p.x<0)p.x=W;if(p.x>W)p.x=0;
     if(p.y<0)p.y=H;if(p.y>H)p.y=0;
-    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-    ctx.fillStyle=`rgba(59,127,255,${p.alpha})`;ctx.fill();
+    cx.beginPath();cx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    cx.fillStyle=`rgba(64,128,255,${p.a})`;cx.fill();
   });
-  particles.forEach((a,i)=>{
-    particles.slice(i+1).forEach(b=>{
-      const dx=a.x-b.x,dy=a.y-b.y,dist=Math.sqrt(dx*dx+dy*dy);
-      if(dist<100){
-        ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
-        ctx.strokeStyle=`rgba(59,127,255,${0.08*(1-dist/100)})`;
-        ctx.lineWidth=0.5;ctx.stroke();
-      }
-    });
-  });
-  requestAnimationFrame(drawParticles);
-}
-drawParticles();
-
-/* ─── SCROLL REVEAL ─── */
-const observer=new IntersectionObserver(entries=>{
-  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});
-},{threshold:0.12});
-document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
-
-/* ─── COUNT UP ─── */
-function countUp(el){
-  const target=parseInt(el.dataset.count);
-  let cur=0;
-  const step=target/30;
-  const id=setInterval(()=>{
-    cur+=step;if(cur>=target){cur=target;clearInterval(id);}
-    el.textContent=Math.floor(cur);
-  },40);
-}
-const statObs=new IntersectionObserver(entries=>{
-  entries.forEach(e=>{
-    if(e.isIntersecting){
-      document.querySelectorAll('[data-count]').forEach(countUp);
-      statObs.disconnect();
+  for(let i=0;i<pts.length;i++){
+    for(let j=i+1;j<pts.length;j++){
+      const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<110){cx.beginPath();cx.moveTo(pts[i].x,pts[i].y);cx.lineTo(pts[j].x,pts[j].y);
+        cx.strokeStyle=`rgba(64,128,255,${.07*(1-d/110)})`;cx.lineWidth=.5;cx.stroke();}
     }
-  });
-},{threshold:0.5});
-const statsEl=document.querySelector('.hero-stats');
-if(statsEl)statObs.observe(statsEl);
+  }
+  requestAnimationFrame(draw);
+})();
 
-/* ─── NAV ACTIVE ─── */
-const sections=document.querySelectorAll('section[id]');
-const navLinks=document.querySelectorAll('.nav-links a');
-window.addEventListener('scroll',()=>{
-  let current='';
-  sections.forEach(s=>{if(window.scrollY>=s.offsetTop-100)current=s.id;});
-  navLinks.forEach(a=>{
-    a.style.color=a.getAttribute('href')==='#'+current?'var(--text)':'';
+/* ── PARALLAX HERO ── */
+document.addEventListener('mousemove',e=>{
+  const rx=(e.clientX/window.innerWidth-.5)*18;
+  const ry=(e.clientY/window.innerHeight-.5)*10;
+  document.getElementById('heroContent').style.transform=`translate(${rx*.3}px,${ry*.3}px)`;
+  document.querySelectorAll('.aurora-blob').forEach((b,i)=>{
+    const f=(i+1)*0.5;
+    b.style.transform=`translate(${rx*f}px,${ry*f}px) scale(1)`;
   });
-},{ passive:true });
+});
+
+/* ── UNIT CARD GLOW FOLLOW ── */
+document.querySelectorAll('.unit-card').forEach(card=>{
+  card.addEventListener('mousemove',e=>{
+    const r=card.getBoundingClientRect();
+    const g=card.querySelector('.unit-card-glow');
+    g.style.left=(e.clientX-r.left)+'px';
+    g.style.top=(e.clientY-r.top)+'px';
+  });
+});
+
+/* ── SCROLL REVEAL ── */
+const rvObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in');});
+},{threshold:0.1,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.rv').forEach(el=>rvObs.observe(el));
+
+/* ── COUNT UP ── */
+function countUp(el){
+  const t=+el.dataset.to;let n=0;
+  const step=t/28;
+  const id=setInterval(()=>{n+=step;if(n>=t){n=t;clearInterval(id);}el.textContent=Math.floor(n);},45);
+}
+const cObs=new IntersectionObserver(e=>{
+  if(e[0].isIntersecting){document.querySelectorAll('[data-to]').forEach(countUp);cObs.disconnect();}
+},{threshold:0.4});
+const st=document.querySelector('.hero-stats');if(st)cObs.observe(st);
+
+/* ── NAV ACTIVE ── */
+const secs=document.querySelectorAll('section[id]');
+const nls=document.querySelectorAll('.nav-links a');
+window.addEventListener('scroll',()=>{
+  let cur='';
+  secs.forEach(s=>{if(window.scrollY>=s.offsetTop-80)cur=s.id;});
+  nls.forEach(a=>{a.classList.toggle('active',a.getAttribute('href')==='#'+cur);});
+},{passive:true});
 </script>
 </body>
 </html>
