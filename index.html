@@ -209,10 +209,12 @@ canvas#particles{
 .hero-sub{
   margin-top:1.5rem;font-size:0.9rem;
   color:var(--muted2);max-width:480px;
+  text-align:center;margin-left:auto;margin-right:auto;
   opacity:0;animation:fadeUp 0.9s ease 0.4s forwards;
 }
 .hero-cta{
   margin-top:2.5rem;display:flex;gap:1rem;
+  justify-content:center;
   opacity:0;animation:fadeUp 0.9s ease 0.55s forwards;
 }
 .btn{
@@ -239,10 +241,12 @@ canvas#particles{
 .btn-ghost:hover{color:var(--text);border-color:rgba(255,255,255,0.3);transform:translateY(-2px);}
 
 .hero-stats{
-  position:absolute;bottom:3rem;left:50%;
-  transform:translateX(-50%);
   display:flex;gap:4rem;
+  justify-content:center;align-items:center;
+  margin-top:2.5rem;
   opacity:0;animation:fadeUp 0.9s ease 0.7s forwards;
+  border-top:1px solid var(--border2);
+  padding-top:2rem;
 }
 .stat{text-align:center;}
 .stat-num{
@@ -557,7 +561,7 @@ footer{
   nav{padding:0 1.5rem;}
   .nav-links{display:none;}
   section{padding:4rem 1.5rem;}
-  .hero-stats{gap:2rem;}
+  .hero-stats{gap:1.5rem;padding-top:1.5rem;}
   .stat-divider{display:none;}
   .rules-cols{grid-template-columns:1fr;}
   .events-grid{grid-template-columns:1fr;}
@@ -623,26 +627,26 @@ footer{
       <a href="#units" class="btn btn-primary">Explore Units</a>
       <a href="#ranks" class="btn btn-ghost">Rank Structure</a>
     </div>
-  </div>
-  <div class="hero-stats">
-    <div class="stat">
-      <span class="stat-num" data-count="10">0</span>
-      <span class="stat-label">Rank Tiers</span>
-    </div>
-    <div class="stat-divider"></div>
-    <div class="stat">
-      <span class="stat-num" data-count="3">0</span>
-      <span class="stat-label">Spec. Units</span>
-    </div>
-    <div class="stat-divider"></div>
-    <div class="stat">
-      <span class="stat-num" data-count="4">0</span>
-      <span class="stat-label">Event Types</span>
-    </div>
-    <div class="stat-divider"></div>
-    <div class="stat">
-      <span class="stat-num" data-count="5">0</span>
-      <span class="stat-label">Max Unit Slots</span>
+    <div class="hero-stats">
+      <div class="stat">
+        <span class="stat-num" data-count="10">0</span>
+        <span class="stat-label">Rank Tiers</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <span class="stat-num" data-count="3">0</span>
+        <span class="stat-label">Spec. Units</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <span class="stat-num" data-count="4">0</span>
+        <span class="stat-label">Event Types</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <span class="stat-num" data-count="5">0</span>
+        <span class="stat-label">Max Unit Slots</span>
+      </div>
     </div>
   </div>
 </section>
