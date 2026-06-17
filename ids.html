@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JTTF IDs</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #F0F2F5; --surf: #FFFFFF; --surf2: #F7F8FA; --border: #E2E6ED;
+  --text: #1A1F2E; --text2: #6B7280; --text3: #9CA3AF;
+  --acc: #1A3A6B; --acc2: #2456A4; --acc-light: #EEF3FB;
+}
+html, body { min-height: 100vh; background: var(--bg); color: var(--text); font-family: 'Roboto', sans-serif; font-size: 14px; }
+.page { max-width: 1220px; margin: 0 auto; padding: 36px 24px 80px; }
+.header { display: flex; align-items: center; gap: 14px; margin-bottom: 36px; }
+.logo-mark { display: flex; align-items: center; }
+.logo-block { background: var(--acc); color: #fff; font-family: 'Roboto Condensed', sans-serif; font-size: 18px; font-weight: 700; letter-spacing: 0.06em; padding: 8px 14px; border-radius: 6px 0 0 6px; }
+.logo-sub { background: var(--acc2); color: rgba(255,255,255,0.85); font-size: 10px; font-weight: 500; letter-spacing: 0.12em; padding: 8px 12px; border-radius: 0 6px 6px 0; line-height: 1.4; text-transform: uppercase; }
+.header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+.header p { font-size: 13px; color: var(--text2); }
+.layout { display: grid; grid-template-columns: 380px 1fr; gap: 24px; align-items: start; }
+@media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+.panel { background: var(--surf); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.panel-hd { padding: 14px 20px; border-bottom: 1px solid var(--border); background: var(--surf2); }
+.panel-hd h2 { font-size: 13px; font-weight: 600; letter-spacing: 0.01em; }
+.panel-hd p { font-size: 12px; color: var(--text3); margin-top: 1px; }
+.panel-body { padding: 20px; }
+.field { margin-bottom: 16px; }
+.field label { display: block; font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 6px; letter-spacing: 0.01em; }
+.field input, .field textarea, .field select {
+  width: 100%; background: var(--surf); border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text); font-family: 'Roboto', sans-serif; font-size: 14px; padding: 10px 13px;
+  outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+}
+.field input:focus, .field textarea:focus, .field select:focus { border-color: var(--acc2); box-shadow: 0 0 0 3px rgba(36,86,164,0.1); }
+.field input::placeholder, .field textarea::placeholder { color: var(--text3); }
+.field textarea { resize: vertical; min-height: 60px; }
+.img-row { display: flex; gap: 8px; }
+.img-row input { flex: 1; }
+.uplabel { display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: var(--acc-light); border: 1px solid #C7D9F5; border-radius: 8px; color: var(--acc2); font-size: 12px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: background 0.15s; flex-shrink: 0; }
+.uplabel:hover { background: #DDE9F8; }
+#file-input { display: none; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.row2.rank-row { grid-template-columns: 0.8fr 1.3fr; }
+.section-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin: 20px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+
+.div-group { display: flex; gap: 6px; flex-wrap: wrap; }
+.div-pill {
+  padding: 7px 14px; border-radius: 20px; border: 1.5px solid var(--border);
+  font-size: 12px; font-weight: 600; letter-spacing: 0.04em; cursor: pointer;
+  transition: all 0.15s; background: var(--surf); color: var(--text2); user-select: none;
+}
+.div-pill:hover { border-color: var(--acc2); color: var(--acc2); }
+.div-pill.active { background: var(--acc); border-color: var(--acc); color: #fff; }
+
+.medal-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.medal-item {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surf2); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px;
+}
+.medal-item input { flex: 1; background: transparent; border: none; font-size: 13px; color: var(--text); outline: none; padding: 0; }
+.medal-item input::placeholder { color: var(--text3); }
+.medal-remove { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px; padding: 0 2px; line-height: 1; transition: color 0.12s; flex-shrink: 0; }
+.medal-remove:hover { color: #B91C1C; }
+.btn-add-medal {
+  display: flex; align-items: center; gap: 6px; margin-top: 6px;
+  padding: 8px 14px; background: var(--acc-light); border: 1px dashed #C7D9F5;
+  border-radius: 8px; color: var(--acc2); font-size: 12px; font-weight: 500; cursor: pointer;
+  transition: background 0.15s; width: 100%; justify-content: center;
+}
+.btn-add-medal:hover { background: #DDE9F8; }
+
+.swatches { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 4px; }
+.swatch { width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; outline: 2px solid transparent; transition: outline 0.12s, transform 0.1s; }
+.swatch:hover { transform: scale(1.12); }
+.swatch.active { outline: 2px solid var(--acc2); outline-offset: 2px; }
+
+.clearance-group { display: flex; gap: 6px; flex-wrap: wrap; }
+.clr-pill { padding: 6px 12px; border-radius: 20px; border: 1.5px solid var(--border); font-size: 11px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; transition: all 0.15s; background: var(--surf); color: var(--text2); }
+.clr-pill:hover { border-color: var(--acc2); color: var(--acc2); }
+.clr-pill.active { background: var(--acc); border-color: var(--acc); color: #fff; }
+
+.btn-gen { width: 100%; margin-top: 20px; padding: 13px; background: var(--acc); color: #fff; border: none; border-radius: 8px; font-family: 'Roboto', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 0.02em; cursor: pointer; transition: background 0.15s, transform 0.1s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.btn-gen:hover { background: var(--acc2); }
+.btn-gen:active { transform: scale(0.99); }
+
+.preview-wrap { position: sticky; top: 24px; }
+.preview-box { background: #D8DCE5; border-radius: 12px; padding: 28px; display: flex; align-items: center; justify-content: center; min-height: 380px; }
+.preview-empty { text-align: center; color: #9BA5B4; font-size: 13px; }
+.preview-empty svg { margin-bottom: 10px; opacity: 0.4; }
+canvas { display: block; width: 100%; height: auto; border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.1); }
+.actions { display: flex; gap: 10px; margin-top: 14px; }
+.btn-dl { flex: 1; display: none; padding: 10px; background: var(--surf); color: var(--text); border: 1px solid var(--border); border-radius: 8px; font-family: 'Roboto', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: border-color 0.15s, background 0.15s; align-items: center; justify-content: center; gap: 7px; }
+.btn-dl:hover { border-color: var(--acc2); background: var(--acc-light); color: var(--acc2); }
+.status-row { display: flex; align-items: center; gap: 7px; margin-top: 12px; padding: 8px 12px; background: var(--surf); border: 1px solid var(--border); border-radius: 8px; }
+.sdot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); flex-shrink: 0; transition: background 0.3s; }
+.sdot.on { background: #16A34A; }
+.stext { font-size: 12px; color: var(--text2); }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="header">
+    <div class="logo-mark">
+      <div class="logo-block">JTTF</div>
+      <div class="logo-sub">Joint Tactical<br>Task Force</div>
+    </div>
+    <div>
+      <h1>ID Card Generator</h1>
+      <p>Secure issuance system — official identification</p>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside>
+      <div class="panel">
+        <div class="panel-hd">
+          <h2>Member Details</h2>
+          <p>Fill in the fields below to generate an ID card</p>
+        </div>
+        <div class="panel-body">
+
+          <div class="field">
+            <label>Avatar Photo</label>
+            <div class="img-row">
+              <input type="text" id="img-url" placeholder="Paste image URL…" />
+              <label class="uplabel" for="file-input">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Upload
+              </label>
+              <input type="file" id="file-input" accept="image/*" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Full Name / Handle</label>
+            <input type="text" id="f-name" placeholder="e.g. JRM_1113" />
+          </div>
+
+          <div class="field">
+            <label>Division <span style="color:var(--text3);font-weight:400">(select one or more)</span></label>
+            <div class="div-group" id="div-group">
+              <div class="div-pill" data-div="CTFSO">CTFSO</div>
+              <div class="div-pill" data-div="Detective">Detective</div>
+              <div class="div-pill" data-div="HRT">HRT</div>
+              <div class="div-pill" data-div="IAB">IAB</div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Division Rank / Role</label>
+            <input type="text" id="f-div-rank" placeholder="e.g. Head CTFSO, Lead Detective…" />
+          </div>
+
+          <div class="row2 rank-row">
+            <div class="field">
+              <label>Faction</label>
+              <input type="text" id="f-faction" placeholder="e.g. JTTF" />
+            </div>
+            <div class="field">
+              <label>Rank / Title</label>
+              <input type="text" id="f-rank" placeholder="e.g. Director" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Notes</label>
+            <textarea id="f-extra" placeholder="Optional — contact info, additional details…"></textarea>
+          </div>
+
+          <div class="field">
+            <label>Card Serial Number</label>
+            <input type="text" id="f-serial" placeholder="e.g. 0002" />
+          </div>
+
+          <div class="section-label">Achievements</div>
+
+          <div id="medal-list" class="medal-list"></div>
+          <button class="btn-add-medal" onclick="addMedal()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Achievement
+          </button>
+
+          <div class="section-label">Card Theme</div>
+
+          <div class="field">
+            <label>Accent Colour</label>
+            <div class="swatches" id="swatches">
+              <div class="swatch active" data-a="#1A3A6B" data-b="#2456A4" style="background:linear-gradient(135deg,#1A3A6B,#2456A4)" title="Navy"></div>
+              <div class="swatch" data-a="#1A1A2E" data-b="#4A4A8A" style="background:linear-gradient(135deg,#1A1A2E,#4A4A8A)" title="Midnight"></div>
+              <div class="swatch" data-a="#134E2A" data-b="#1A6B3A" style="background:linear-gradient(135deg,#134E2A,#1A6B3A)" title="Forest"></div>
+              <div class="swatch" data-a="#7C1D1D" data-b="#B91C1C" style="background:linear-gradient(135deg,#7C1D1D,#B91C1C)" title="Crimson"></div>
+              <div class="swatch" data-a="#1E3A5F" data-b="#0E7490" style="background:linear-gradient(135deg,#1E3A5F,#0E7490)" title="Steel"></div>
+              <div class="swatch" data-a="#3B0764" data-b="#7C3AED" style="background:linear-gradient(135deg,#3B0764,#7C3AED)" title="Violet"></div>
+              <div class="swatch" data-a="#1C1917" data-b="#57534E" style="background:linear-gradient(135deg,#1C1917,#78716C)" title="Slate"></div>
+              <div class="swatch" data-a="#92400E" data-b="#D97706" style="background:linear-gradient(135deg,#92400E,#D97706)" title="Amber"></div>
+              <div class="swatch" data-a="#3D5A1E" data-b="#6B8C3A" style="background:linear-gradient(135deg,#3D5A1E,#6B8C3A)" title="Olive"></div>
+              <div class="swatch" data-a="#7C1543" data-b="#BE185D" style="background:linear-gradient(135deg,#7C1543,#BE185D)" title="Rose"></div>
+              <div class="swatch" data-a="#7A3E12" data-b="#C2681A" style="background:linear-gradient(135deg,#7A3E12,#C2681A)" title="Copper"></div>
+              <div class="swatch" data-a="#0C4A6E" data-b="#0891B2" style="background:linear-gradient(135deg,#0C4A6E,#0891B2)" title="Arctic"></div>
+              <div class="swatch" data-a="#0A0A0A" data-b="#2A2A2A" style="background:linear-gradient(135deg,#0A0A0A,#2A2A2A)" title="Black Ops"></div>
+              <div class="swatch" data-a="#4A1942" data-b="#9D174D" style="background:linear-gradient(135deg,#4A1942,#9D174D)" title="Maroon"></div>
+              <div class="swatch" data-a="#064E3B" data-b="#059669" style="background:linear-gradient(135deg,#064E3B,#059669)" title="Emerald"></div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Clearance Level</label>
+            <div class="clearance-group" id="clearance-group">
+              <div class="clr-pill" data-level="LEVEL 1">LVL 1</div>
+              <div class="clr-pill" data-level="LEVEL 2">LVL 2</div>
+              <div class="clr-pill active" data-level="LEVEL 3">LVL 3</div>
+              <div class="clr-pill" data-level="LEVEL 4">LVL 4</div>
+              <div class="clr-pill" data-level="LEVEL 5">LVL 5</div>
+              <div class="clr-pill" data-level="TOP SECRET">TOP SECRET</div>
+              <div class="clr-pill" data-level="OMEGA">OMEGA</div>
+            </div>
+          </div>
+
+          <button class="btn-gen" onclick="generateCard()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            Generate ID Card
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <main class="preview-wrap">
+      <div class="preview-box" id="preview-box">
+        <div class="preview-empty" id="preview-hint">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+          <div>Fill in the form and click<br><strong>Generate ID Card</strong></div>
+        </div>
+        <canvas id="card-canvas" style="display:none;"></canvas>
+      </div>
+      <div class="actions">
+        <button class="btn-dl" id="dl-btn" onclick="downloadCard()" style="display:none; flex:1; padding:10px; background:var(--surf); color:var(--text); border:1px solid var(--border); border-radius:8px; font-family:'Roboto',sans-serif; font-size:13px; font-weight:500; cursor:pointer; align-items:center; justify-content:center; gap:7px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download PNG
+        </button>
+      </div>
+      <div class="status-row">
+        <div class="sdot" id="sdot"></div>
+        <span class="stext" id="stext">Awaiting input</span>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+let uploadedDataURL = null;
+let theme = { a: '#1A3A6B', b: '#2456A4' };
+let clearanceLevel = 'LEVEL 3';
+let selectedDivisions = [];
+let medals = [];
+
+/* ── Live preview: debounced auto-regenerate on any change ── */
+let liveTimer = null;
+function scheduleLiveUpdate() {
+  clearTimeout(liveTimer);
+  liveTimer = setTimeout(generateCard, 150);
+}
+
+document.querySelectorAll('.div-pill').forEach(el => {
+  el.addEventListener('click', () => {
+    el.classList.toggle('active');
+    const d = el.dataset.div;
+    if (el.classList.contains('active')) {
+      if (!selectedDivisions.includes(d)) selectedDivisions.push(d);
+    } else {
+      selectedDivisions = selectedDivisions.filter(x => x !== d);
+    }
+    scheduleLiveUpdate();
+  });
+});
+
+document.querySelectorAll('.swatch').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.swatch').forEach(x => x.classList.remove('active'));
+    el.classList.add('active');
+    theme = { a: el.dataset.a, b: el.dataset.b };
+    scheduleLiveUpdate();
+  });
+});
+
+document.querySelectorAll('.clr-pill').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.clr-pill').forEach(x => x.classList.remove('active'));
+    el.classList.add('active');
+    clearanceLevel = el.dataset.level;
+    scheduleLiveUpdate();
+  });
+});
+
+document.getElementById('file-input').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    uploadedDataURL = ev.target.result;
+    document.getElementById('img-url').placeholder = '✓ ' + file.name;
+    scheduleLiveUpdate();
+  };
+  r.readAsDataURL(file);
+});
+
+/* Wire up all text fields for live preview */
+['img-url','f-name','f-div-rank','f-faction','f-rank','f-extra','f-serial'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', scheduleLiveUpdate);
+});
+
+function addMedal() {
+  const id = Date.now();
+  medals.push({ id, text: '' });
+  renderMedals();
+  setTimeout(() => {
+    const inp = document.getElementById('medal-input-' + id);
+    if (inp) inp.focus();
+  }, 50);
+  scheduleLiveUpdate();
+}
+
+function removeMedal(id) {
+  medals = medals.filter(m => m.id !== id);
+  renderMedals();
+  scheduleLiveUpdate();
+}
+
+function renderMedals() {
+  const list = document.getElementById('medal-list');
+  list.innerHTML = '';
+  medals.forEach(m => {
+    const item = document.createElement('div');
+    item.className = 'medal-item';
+    item.innerHTML = `
+      <input id="medal-input-${m.id}" type="text" placeholder="Achievement…" value="${m.text}" oninput="updateMedal(${m.id}, this.value)" />
+      <button class="medal-remove" onclick="removeMedal(${m.id})" title="Remove">×</button>
+    `;
+    list.appendChild(item);
+  });
+}
+
+function updateMedal(id, val) {
+  const m = medals.find(x => x.id === id);
+  if (m) m.text = val;
+  scheduleLiveUpdate();
+}
+
+/* ── Canvas helpers ── */
+function rr(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+
+function wrapLines(ctx, text, maxW) {
+  const words = text.split(' ');
+  let line = '', lines = [];
+  for (const w of words) {
+    const t = line ? line + ' ' + w : w;
+    if (ctx.measureText(t).width > maxW && line) { lines.push(line); line = w; }
+    else line = t;
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+function fitText(ctx, text, maxW, baseFont, minSize) {
+  let size = baseFont;
+  ctx.font = `700 ${size}px "Roboto Condensed", "Roboto", sans-serif`;
+  while (ctx.measureText(text).width > maxW && size > minSize) {
+    size -= 0.5;
+    ctx.font = `700 ${size}px "Roboto Condensed", "Roboto", sans-serif`;
+  }
+  return size;
+}
+
+function drawAchievementRow(ctx, text, x, y, maxW) {
+  ctx.font = '500 14px "Roboto",sans-serif';
+  const lines = wrapLines(ctx, text.trim(), maxW);
+  const lineH = 18;
+  const blockH = lines.length * lineH;
+
+  ctx.fillStyle = '#1E293B';
+  ctx.textBaseline = 'middle';
+  lines.forEach((l, i) => ctx.fillText(l, x, y + i * lineH + lineH / 2));
+  ctx.textBaseline = 'alphabetic';
+
+  return blockH;
+}
+
+function generateCard() {
+  const name    = document.getElementById('f-name').value.trim()     || 'Member Name';
+  const rank    = document.getElementById('f-rank').value.trim()     || 'Rank';
+  const divRank = document.getElementById('f-div-rank').value.trim();
+  const faction = document.getElementById('f-faction').value.trim()  || 'Faction';
+  const extra   = document.getElementById('f-extra').value.trim();
+  const serial  = document.getElementById('f-serial').value.trim()   || '0001';
+  const imgUrl  = document.getElementById('img-url').value.trim();
+  const divs    = selectedDivisions.length ? selectedDivisions : ['—'];
+  const meds    = medals.filter(m => m.text.trim());
+
+  document.getElementById('stext').textContent = 'Generating…';
+  document.getElementById('sdot').classList.remove('on');
+
+  const src = uploadedDataURL || imgUrl || null;
+  if (src) {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload  = () => draw(img, name, rank, divs, divRank, faction, extra, meds, serial);
+    img.onerror = () => draw(null, name, rank, divs, divRank, faction, extra, meds, serial);
+    img.src = src;
+  } else {
+    draw(null, name, rank, divs, divRank, faction, extra, meds, serial);
+  }
+}
+
+function draw(avatarImg, name, rank, divs, divRank, faction, extra, meds, serial) {
+  const W = 1020, H = 700;
+  const canvas = document.getElementById('card-canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  const ca = theme.a, cb = theme.b;
+
+  rr(ctx, 0, 0, W, H, 18);
+  ctx.fillStyle = '#FFFFFF'; ctx.fill();
+  ctx.save();
+  rr(ctx, 0, 0, W, H, 18); ctx.clip();
+
+  /* Header */
+  const HH = 104;
+  const hGrad = ctx.createLinearGradient(0, 0, W, 0);
+  hGrad.addColorStop(0, ca); hGrad.addColorStop(1, cb);
+  ctx.fillStyle = hGrad; ctx.fillRect(0, 0, W, HH);
+  ctx.fillStyle = 'rgba(255,255,255,0.04)';
+  for (let x = 12; x < W; x += 24) for (let y = 8; y < HH; y += 24) {
+    ctx.beginPath(); ctx.arc(x, y, 1.5, 0, Math.PI*2); ctx.fill();
+  }
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = '900 32px "Roboto", sans-serif';
+  ctx.letterSpacing = '4px';
+  ctx.fillText('JOINT TACTICAL TASK FORCE', 36, 52);
+  ctx.letterSpacing = '0px';
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.font = '400 13px "Roboto", sans-serif';
+  ctx.letterSpacing = '3px';
+  ctx.fillText('OFFICIAL IDENTIFICATION CARD', 36, 80);
+  ctx.letterSpacing = '0px';
+
+  ctx.textAlign = 'right';
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.font = '700 16px "Roboto Condensed", "Roboto", sans-serif';
+  ctx.letterSpacing = '1px';
+  ctx.fillText(serial, W - 36, 46);
+  ctx.letterSpacing = '0px';
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.font = '400 11px "Roboto", sans-serif';
+  ctx.letterSpacing = '1.5px';
+  ctx.fillText('SECURE · VERIFIED', W - 36, 68);
+  ctx.letterSpacing = '0px';
+  ctx.textAlign = 'left';
+
+  /* Photo */
+  const PX = 36, PY = HH + 24, PW = 200, PH = 240;
+  ctx.shadowColor = 'rgba(0,0,0,0.12)'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 4;
+  ctx.fillStyle = '#E8ECF2'; rr(ctx, PX, PY, PW, PH, 8); ctx.fill();
+  ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+
+  if (avatarImg) {
+    ctx.save(); rr(ctx, PX, PY, PW, PH, 8); ctx.clip();
+    const ia = avatarImg.width/avatarImg.height, ba = PW/PH;
+    let sx=0,sy=0,sw=avatarImg.width,sh=avatarImg.height;
+    if (ia>ba){sw=avatarImg.height*ba;sx=(avatarImg.width-sw)/2;}
+    else{sh=avatarImg.width/ba;sy=(avatarImg.height-sh)/2;}
+    ctx.drawImage(avatarImg,sx,sy,sw,sh,PX,PY,PW,PH);
+    ctx.restore();
+  } else {
+    ctx.fillStyle='#D1D9E6'; rr(ctx,PX,PY,PW,PH,8); ctx.fill();
+    ctx.fillStyle='#A8B4C8';
+    ctx.beginPath(); ctx.arc(PX+PW/2,PY+PH*0.38,46,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(PX+PW/2,PY+PH+10,72,52,0,Math.PI,2*Math.PI); ctx.fill();
+  }
+  ctx.strokeStyle='rgba(0,0,0,0.08)'; ctx.lineWidth=1; rr(ctx,PX,PY,PW,PH,8); ctx.stroke();
+
+  /* Rank chip */
+  const rkY = PY+PH+10, rkH = 38;
+  const rkGrad = ctx.createLinearGradient(PX,0,PX+PW,0);
+  rkGrad.addColorStop(0,ca); rkGrad.addColorStop(1,cb);
+  ctx.fillStyle=rkGrad; rr(ctx,PX,rkY,PW,rkH,6); ctx.fill();
+  ctx.fillStyle='#FFFFFF'; ctx.textAlign='center';
+  const rankDisplay = rank.toUpperCase();
+  let rkSize = fitText(ctx, rankDisplay, PW-16, 13, 8);
+  ctx.font=`700 ${rkSize}px "Roboto Condensed","Roboto",sans-serif`;
+  ctx.letterSpacing = rkSize>11?'2.5px':'1px';
+  ctx.fillText(rankDisplay, PX+PW/2, rkY+rkH/2+rkSize*0.38);
+  ctx.letterSpacing='0px'; ctx.textAlign='left';
+
+  /* Faction chip */
+  const fcY = rkY+rkH+10;
+  ctx.fillStyle='#F1F4F9'; rr(ctx,PX,fcY,PW,32,5); ctx.fill();
+  ctx.strokeStyle='#E2E6ED'; ctx.lineWidth=1; rr(ctx,PX,fcY,PW,32,5); ctx.stroke();
+  ctx.fillStyle=ca; ctx.font='600 12px "Roboto",sans-serif'; ctx.letterSpacing='2px';
+  ctx.textAlign='center'; ctx.fillText(faction.toUpperCase(),PX+PW/2,fcY+21);
+  ctx.letterSpacing='0px'; ctx.textAlign='left';
+
+  /* Main info area */
+  const IX = PX+PW+42, IW = W-IX-36;
+
+  /* Name */
+  ctx.fillStyle='#0F172A'; ctx.font='700 36px "Roboto",sans-serif';
+  const nameLines = wrapLines(ctx, name, IW);
+  nameLines.forEach((l,i) => ctx.fillText(l, IX, HH+68+i*42));
+  const nameBottom = HH+68+nameLines.length*42;
+
+  const lineGrad = ctx.createLinearGradient(IX,0,IX+IW,0);
+  lineGrad.addColorStop(0,cb); lineGrad.addColorStop(0.5,'rgba(36,86,164,0.12)'); lineGrad.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=lineGrad; ctx.fillRect(IX,nameBottom+8,IW,2);
+
+  /* Division */
+  let cy = nameBottom+28;
+  ctx.fillStyle='#64748B'; ctx.font='400 11px "Roboto",sans-serif'; ctx.letterSpacing='1.8px';
+  ctx.fillText('DIVISION', IX, cy); ctx.letterSpacing='0px';
+  cy += 24;
+
+  const divStr = divs.join(' · ');
+  ctx.fillStyle='#1E293B'; ctx.font='500 17px "Roboto",sans-serif';
+  ctx.fillText(divStr, IX, cy);
+  cy += 22;
+
+  if (divRank) {
+    ctx.fillStyle = ca;
+    ctx.font = '600 13px "Roboto Condensed","Roboto",sans-serif';
+    ctx.letterSpacing = '1.5px';
+    ctx.fillText(divRank.toUpperCase(), IX, cy);
+    ctx.letterSpacing = '0px';
+    cy += 20;
+  }
+  cy += 12;
+
+  /* Divider */
+  ctx.strokeStyle='#EEF1F6'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(IX,cy); ctx.lineTo(W-36,cy); ctx.stroke();
+  cy += 20;
+
+  /* Serial + Clearance */
+  const colW = (IW-28)/2;
+  function miniField(label, value, x, y) {
+    ctx.fillStyle='#94A3B8'; ctx.font='400 10px "Roboto",sans-serif'; ctx.letterSpacing='1.5px';
+    ctx.fillText(label,x,y); ctx.letterSpacing='0px';
+    ctx.fillStyle='#1E293B'; ctx.font='600 16px "Roboto",sans-serif';
+    ctx.fillText(value||'—',x,y+24);
+  }
+  miniField('SERIAL NO.', serial, IX, cy);
+  miniField('CLEARANCE', clearanceLevel, IX+colW+28, cy);
+  cy += 54;
+
+  ctx.strokeStyle='#EEF1F6'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(IX,cy); ctx.lineTo(W-36,cy); ctx.stroke();
+  cy += 20;
+
+  /* Notes */
+  if (extra) {
+    ctx.fillStyle='#94A3B8'; ctx.font='400 10px "Roboto",sans-serif'; ctx.letterSpacing='1.5px';
+    ctx.fillText('NOTES',IX,cy); ctx.letterSpacing='0px'; cy+=20;
+    ctx.fillStyle='#475569'; ctx.font='400 14px "Roboto",sans-serif';
+    wrapLines(ctx,extra,IW).forEach((l,i)=>ctx.fillText(l,IX,cy+i*22));
+    cy += wrapLines(ctx,extra,IW).length*22+16;
+    ctx.strokeStyle='#EEF1F6'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(IX,cy); ctx.lineTo(W-36,cy); ctx.stroke();
+    cy+=16;
+  }
+
+  /* Achievements */
+  if (meds.length > 0) {
+    ctx.fillStyle='#94A3B8'; ctx.font='400 10px "Roboto",sans-serif'; ctx.letterSpacing='1.5px';
+    ctx.fillText('ACHIEVEMENTS', IX, cy); ctx.letterSpacing='0px';
+    cy += 16;
+
+    meds.forEach((medal) => {
+      const blockH = drawAchievementRow(ctx, medal.text, IX, cy, IW);
+      cy += blockH + 6;
+    });
+  }
+
+  /* Barcode */
+  const bY=H-76, bX=PX, bW=200, bH=44;
+  const bars=[3,1,2,1,3,2,1,2,1,3,1,2,2,1,3,1,1,2,3,1,2,1,1,2];
+  let bCur=bX;
+  const bUnit=bW/bars.reduce((a,b)=>a+b,0);
+  bars.forEach((w,i)=>{ if(i%2===0){ctx.fillStyle='#1E293B'; ctx.fillRect(bCur,bY,w*bUnit,bH);} bCur+=w*bUnit; });
+  ctx.fillStyle='#64748B'; ctx.font='400 9px "Roboto",sans-serif'; ctx.letterSpacing='2.5px';
+  ctx.fillText(serial.replace(/\D/g,''),bX,bY+bH+14); ctx.letterSpacing='0px';
+
+  /* JTTF wordmark */
+  const wmX=W-36, wmY=bY+bH/2;
+  ctx.save(); ctx.globalAlpha=0.03; ctx.fillStyle=ca;
+  ctx.font='900 80px "Roboto",sans-serif'; ctx.letterSpacing='6px';
+  ctx.textAlign='right'; ctx.fillText('JTTF',wmX,wmY+32); ctx.restore();
+  ctx.textAlign='right'; ctx.fillStyle=ca;
+  ctx.font='900 24px "Roboto",sans-serif'; ctx.letterSpacing='4px';
+  ctx.fillText('JTTF',wmX,wmY+2); ctx.letterSpacing='0px';
+  ctx.fillStyle='#94A3B8'; ctx.font='400 9px "Roboto",sans-serif'; ctx.letterSpacing='1.5px';
+  ctx.fillText('JOINT TACTICAL TASK FORCE',wmX,wmY+18); ctx.letterSpacing='0px';
+  ctx.textAlign='left';
+
+  /* Footer */
+  const ftGrad=ctx.createLinearGradient(0,0,W,0);
+  ftGrad.addColorStop(0,ca); ftGrad.addColorStop(0.5,cb); ftGrad.addColorStop(1,ca);
+  ctx.fillStyle=ftGrad; ctx.fillRect(0,H-12,W,12);
+  ctx.fillStyle='#94A3B8'; ctx.font='400 9px "Roboto",sans-serif'; ctx.letterSpacing='0.5px';
+  ctx.textAlign='center';
+  ctx.fillText('PROPERTY OF THE JOINT TACTICAL TASK FORCE · IF FOUND PLEASE RETURN TO NEAREST JTTF OFFICE',W/2,H-19);
+  ctx.letterSpacing='0px';
+
+  /* Left accent stripe */
+  const sGrad=ctx.createLinearGradient(0,0,0,H);
+  sGrad.addColorStop(0,ca); sGrad.addColorStop(1,cb);
+  ctx.fillStyle=sGrad; ctx.fillRect(0,HH,4,H-HH-12);
+
+  ctx.restore();
+  ctx.strokeStyle='rgba(0,0,0,0.08)'; ctx.lineWidth=1;
+  rr(ctx,0,0,W,H,18); ctx.stroke();
+
+  document.getElementById('preview-hint').style.display='none';
+  canvas.style.display='block';
+  document.getElementById('dl-btn').style.display='flex';
+  document.getElementById('sdot').classList.add('on');
+  document.getElementById('stext').textContent=`Card generated — ${serial}`;
+}
+
+function downloadCard() {
+  const canvas=document.getElementById('card-canvas');
+  const a=document.createElement('a');
+  a.download='jttf-id-'+(document.getElementById('f-serial').value.trim()||'card')+'.png';
+  a.href=canvas.toDataURL('image/png'); a.click();
+}
+
+/* Show an initial live preview right away with whatever defaults/placeholders are set */
+generateCard();
+</script>
+</body>
+</html>
