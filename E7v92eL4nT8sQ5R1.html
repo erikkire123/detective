@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>[JTTF]</title>
+<title>JTTF</title>
   <link rel="icon" type="image/png" href="https://cdn.discordapp.com/attachments/1193617535904530505/1530380675352494150/1fb9e07e-7f6c-49e7-b4e8-e810535bf663-removebg-preview.png?ex=6a655d92&is=6a640c12&hm=dc1a3e1dabd0291ab9583e2d7e944b391d5a7f9391d048855d9316e36cc13bab&">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -761,7 +761,8 @@ async function sendProfileToWebhook(key){
   const pct=totalEvents?Math.round((prof.eventCount/totalEvents)*100):0;
   const lastRole=prof.eventDetails[prof.eventDetails.length-1]?.role||'attendee';
   const roleColors={host:0xff9f0a,cohost:0x5e5ce6,attendee:0x30d158};
-  const roleEmoji={host:'\uD83E\uDD47',cohost:'\uD83E\uDD48',attendee:'\uD83E\uDD49'};
+  const placement=overallPlacement(key);
+  const placementEmoji=placement===1?'\uD83E\uDD47':placement===2?'\uD83E\uDD48':placement===3?'\uD83E\uDD49':'\uD83D\uDCCB';
   const streak=personStreak(key);
   const lastActive=prof.lastActive?prof.lastActive.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}):'&mdash;';
   const recent=[...prof.eventDetails].reverse().slice(0,5);
@@ -773,6 +774,7 @@ async function sendProfileToWebhook(key){
     {name:'Events',value:`\`${prof.eventCount}\` / ${totalEvents}`,inline:true},
     {name:'Attendance',value:`\`${pct}%\``,inline:true},
   ];
+  if(placement)fields.push({name:'Standing',value:`#${placement} overall`,inline:true});
   if(prof.rank)fields.push({name:'Rank',value:prof.rank,inline:true});
   fields.push(
     {name:'Host',value:`\`${prof.host}\``,inline:true},
@@ -785,7 +787,7 @@ async function sendProfileToWebhook(key){
   const payload={
     embeds:[{
       author:{name:'JTTF \u00B7 PERSONNEL FILE'},
-      title:`${roleEmoji[lastRole]||'\uD83D\uDCCB'}  ${name}`,
+      title:`${placementEmoji}  ${name}`,
       description:prof.discordId?`Discord ID: \`${prof.discordId}\``:undefined,
       color:roleColors[lastRole]||0xff9f0a,
       fields,
@@ -1268,11 +1270,11 @@ function movePerson(eventId,fromRole,personId,toRole){
 /* Copy roster */
 function copyRoster(eventId){
   const ev=state.events.find(e=>e.id===eventId);if(!ev)return;
-  const lines=[`=== ${ev.name}${ev.date?` (${ev.date})`:''} ===`];
+  const lines=[`# ${ev.name}`];
   for(const role of['host','cohost','attendee']){
     const arr=ev[role]||[];if(!arr.length)continue;
-    lines.push(`\n[${roleCfg[role].label.toUpperCase()}]`);
-    arr.forEach(p=>lines.push(`${p.username||'?'}${p.discordId?` (${p.discordId})`:''}`));
+    lines.push(`\n**${roleCfg[role].label}**`);
+    arr.forEach(p=>lines.push(p.discordId?`<@${p.discordId}>`:(p.username||'?')));
   }
   navigator.clipboard.writeText(lines.join('\n')).then(()=>showToast('Roster copied.')).catch(()=>showToast('Copy failed.',true));
 }
@@ -1305,6 +1307,11 @@ function leaderboardData(eventsSubset){
     }
   }
   return [...map.values()].map(e=>({...e,eventCount:e.events.size,hosting:e.host+e.cohost,total:e.host*3+e.cohost*2+e.attendee}));
+}
+function overallPlacement(key){
+  const ranked=leaderboardData(state.events).filter(e=>e.total>0).sort((a,b)=>b.total-a.total);
+  const idx=ranked.findIndex(e=>e.key===key);
+  return idx===-1?null:idx+1;
 }
 function eventsForPeriod(period){
   if(period==='total')return state.events;
