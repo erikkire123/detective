@@ -342,6 +342,18 @@ button.ghost:disabled{opacity:.4;cursor:not-allowed;}
 .toast.err{border-left-color:var(--danger);color:var(--danger);}
 .toast-undo{background:none;border:none;color:var(--accent);font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;padding:0;text-decoration:underline;}
 
+/* Admin panel */
+.admin-list{display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;margin-top:4px;}
+.admin-adj-row{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 9px;font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10.5px;}
+.admin-adj-row .aname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);}
+.admin-adj-row .adelta{color:var(--text-dim);white-space:nowrap;}
+.admin-adj-row .adelta span.h{color:var(--host);}
+.admin-adj-row .adelta span.c{color:var(--cohost);}
+.admin-adj-row .adelta span.a{color:var(--attendee);}
+.admin-badge{display:inline-flex;align-items:center;gap:5px;font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:9.5px;padding:3px 8px;border-radius:2px;background:var(--rank-dim);color:var(--rank);letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px;}
+.admin-delta-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.admin-delta-grid .field{margin-bottom:0;}
+
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;}}
 </style>
 </head>
@@ -375,6 +387,7 @@ button.ghost:disabled{opacity:.4;cursor:not-allowed;}
 <symbol id="i-brand-discord" viewBox="0 0 24 24"><path d="M8 5c-2 0-4 3-4 7s1 6 2 6c1 0 1.5-1 2-2 1.3.5 2.7.8 4 .8s2.7-.3 4-.8c.5 1 1 2 2 2 1 0 2-2 2-6s-2-7-4-7c-1 0-1.7.3-2.3.8a10 10 0 00-3.4 0C9.7 5.3 9 5 8 5z"/><circle cx="9" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1" fill="currentColor" stroke="none"/></symbol>
 <symbol id="i-broadcast" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M8.5 8.5a5 5 0 000 7M15.5 8.5a5 5 0 010 7M5.5 5.5a9 9 0 000 13M18.5 5.5a9 9 0 010 13"/></symbol>
 <symbol id="i-alert-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></symbol>
+<symbol id="i-shield-lock" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><rect x="9" y="11" width="6" height="5" rx="1"/><path d="M10.5 11V9.5a1.5 1.5 0 013 0V11"/></symbol>
 </defs>
 </svg>
 <div class="wrap">
@@ -505,7 +518,7 @@ button.ghost:disabled{opacity:.4;cursor:not-allowed;}
 const BIN_ID='6a3d2bacda38895dfefd5e8e';
 const API_KEY='$2a$10$9dKNzVl1cUjZzcndX/LDp.kK8zdWOWnDTklDrWJTGZ0vGN7Jjdy6K';
 const BASE=`https://api.jsonbin.io/v3/b/${BIN_ID}`;
-let state={events:[],personnel:[],webhookUrl:''};
+let state={events:[],personnel:[],webhookUrl:'',adjustments:[]};
 let eventFilterQuery='';
 let eventSort='newest';
 
@@ -592,6 +605,25 @@ function combinedPeoplePool(){
   return out;
 }
 
+/* Manual admin adjustments — always all-time, never counted in weekly periods */
+function adjustmentsFor(key){
+  return state.adjustments.filter(a=>a.key===key);
+}
+function adjustmentTotals(key){
+  const list=adjustmentsFor(key);
+  return list.reduce((acc,a)=>{acc.host+=a.host||0;acc.cohost+=a.cohost||0;acc.attendee+=a.attendee||0;return acc;},{host:0,cohost:0,attendee:0});
+}
+function applyAdjustmentsToMap(map){
+  for(const adj of state.adjustments){
+    const key=adj.key;
+    if(!map.has(key))map.set(key,{username:adj.username,discordId:adj.discordId,key,host:0,cohost:0,attendee:0,events:new Set()});
+    const entry=map.get(key);
+    entry.host+=adj.host||0;entry.cohost+=adj.cohost||0;entry.attendee+=adj.attendee||0;
+    if(!entry.username&&adj.username)entry.username=adj.username;
+    if(!entry.discordId&&adj.discordId)entry.discordId=adj.discordId;
+  }
+}
+
 function buildProfile(key){
   const profile={username:'',discordId:'',rank:'',host:0,cohost:0,attendee:0,eventSet:new Set(),eventDetails:[],lastActive:null};
   const roster=findPersonnel(key);
@@ -611,6 +643,11 @@ function buildProfile(key){
       }
     }
   }
+  /* fold in manual admin adjustments — all-time only, doesn't touch eventCount */
+  const adj=adjustmentTotals(key);
+  profile.host+=adj.host;profile.cohost+=adj.cohost;profile.attendee+=adj.attendee;
+  if(!profile.username){const rec=state.adjustments.find(a=>a.key===key);if(rec)profile.username=rec.username||profile.username;}
+  if(!profile.discordId){const rec=state.adjustments.find(a=>a.key===key);if(rec)profile.discordId=rec.discordId||profile.discordId;}
   profile.eventCount=profile.eventSet.size;
   profile.total=profile.host*3+profile.cohost*2+profile.attendee;
   profile.hosting=profile.host+profile.cohost;
@@ -704,6 +741,23 @@ document.addEventListener('keydown',e=>{
   else if(e.key==='n'){e.preventDefault();if(!g('overlay').classList.contains('show'))openNewEventModal();}
 });
 
+/* Secret admin panel — type "admin" anywhere (not while typing in a field) to open it */
+(function(){
+  let buffer='';
+  const CODE='admin';
+  document.addEventListener('keydown',e=>{
+    const tag=(e.target.tagName||'').toLowerCase();
+    const typing=tag==='input'||tag==='textarea'||e.target.isContentEditable;
+    if(typing)return;
+    if(e.key.length!==1)return;
+    buffer=(buffer+e.key.toLowerCase()).slice(-CODE.length);
+    if(buffer===CODE){
+      buffer='';
+      if(!g('overlay').classList.contains('show'))openAdminPanel();
+    }
+  });
+})();
+
 /* Persistence */
 async function loadEvents(){
   setStatus('saving');g('statusText').textContent='syncing...';
@@ -714,6 +768,7 @@ async function loadEvents(){
     state.events=Array.isArray(rec)?rec:Array.isArray(rec?.events)?rec.events:[];
     state.personnel=Array.isArray(rec?.personnel)?rec.personnel:[];
     state.webhookUrl=typeof rec?.webhookUrl==='string'?rec.webhookUrl:'';
+    state.adjustments=Array.isArray(rec?.adjustments)?rec.adjustments:[];
     g('statusText').textContent='operational';setStatus('ok');render();
   }catch(e){
     console.error(e);g('statusText').textContent='offline';setStatus('err');
@@ -723,7 +778,7 @@ async function loadEvents(){
 async function saveEvents(){
   setStatus('saving');g('statusText').textContent='saving...';
   try{
-    const r=await fetch(BASE,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':API_KEY},body:JSON.stringify({events:state.events,personnel:state.personnel,webhookUrl:state.webhookUrl})});
+    const r=await fetch(BASE,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':API_KEY},body:JSON.stringify({events:state.events,personnel:state.personnel,webhookUrl:state.webhookUrl,adjustments:state.adjustments})});
     if(!r.ok)throw new Error('HTTP '+r.status);
     g('statusText').textContent='operational';setStatus('ok');pingStatus();
   }catch(e){
@@ -832,6 +887,101 @@ function openWebhookSettingsModal(){
   });
 }
 g('webhookSettingsBtn').addEventListener('click',openWebhookSettingsModal);
+
+/* Secret admin panel — manual all-time host/cohost/attendee point adjustments */
+function adminAdjRowHtml(adj){
+  const parts=[];
+  if(adj.host)parts.push(`<span class="h">${adj.host>0?'+':''}${adj.host}H</span>`);
+  if(adj.cohost)parts.push(`<span class="c">${adj.cohost>0?'+':''}${adj.cohost}C</span>`);
+  if(adj.attendee)parts.push(`<span class="a">${adj.attendee>0?'+':''}${adj.attendee}A</span>`);
+  return `<div class="admin-adj-row" data-aid="${adj.id}">
+    <span class="aname">${esc(adj.username||adj.discordId||'Unknown')}${adj.note?` <span style="color:var(--text-muted)">&middot; ${esc(adj.note)}</span>`:''}</span>
+    <span class="adelta">${parts.join(' ')||'&ndash;'}</span>
+    <button class="remove-x" title="Remove adjustment" data-act="del-adj" data-aid="${adj.id}"><svg class="icon" aria-hidden="true" style="font-size:11px"><use href="#i-x"></use></svg></button>
+  </div>`;
+}
+function renderAdminAdjList(){
+  const list=g('adminAdjList');if(!list)return;
+  if(!state.adjustments.length){list.innerHTML=`<div style="text-align:center;padding:14px;color:var(--text-muted);font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10.5px">No manual adjustments yet.</div>`;return;}
+  list.innerHTML=[...state.adjustments].reverse().map(adminAdjRowHtml).join('');
+}
+function openAdminPanel(){
+  const existingPeople=combinedPeoplePool();
+  openModal(`
+    <span class="admin-badge"><svg class="icon" aria-hidden="true"><use href="#i-shield-lock"></use></svg> Admin &middot; Manual Points</span>
+    <h3 style="margin-bottom:6px"><svg class="icon" style="color:var(--rank)" aria-hidden="true"><use href="#i-shield-lock"></use></svg> Adjust Personnel</h3>
+    <div class="field-hint" style="margin-bottom:14px">Adds custom host / co-host / attendee credit to a person, counted toward All-Time standings only &mdash; never This Week or Last Week.</div>
+    <div class="field"><label for="adminPName">Person</label>
+      <div class="field-inner"><input id="adminPName" type="text" placeholder="Search by username or ID" autocomplete="off"><div class="autocomplete-drop" id="adminAcDrop"></div></div>
+    </div>
+    <div class="field mono"><label for="adminPId">Discord ID (optional)</label><input id="adminPId" type="text" placeholder="e.g. 482910374659028992"></div>
+    <div class="field"><label>Add points</label>
+      <div class="admin-delta-grid">
+        <div class="field mono"><input id="adminHost" type="number" placeholder="Host" value="0"></div>
+        <div class="field mono"><input id="adminCohost" type="number" placeholder="Co-Host" value="0"></div>
+        <div class="field mono"><input id="adminAttendee" type="number" placeholder="Attendee" value="0"></div>
+      </div>
+      <div class="field-hint">Negative numbers subtract. Each field applies independently.</div>
+    </div>
+    <div class="field"><label for="adminNote">Note (optional)</label><input id="adminNote" type="text" placeholder="e.g. bonus for covering a shift"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="cancelBtn">Close</button>
+      <button class="btn-confirm" id="confirmBtn" style="background:var(--rank);color:#fff">Apply</button>
+    </div>
+    <div class="profile-section-title" style="margin-top:18px">Existing adjustments</div>
+    <div class="admin-list" id="adminAdjList"></div>`,()=>{
+    g('modalBox').classList.add('wide');
+    g('cancelBtn').onclick=closeModal;
+    renderAdminAdjList();
+    const pName=g('adminPName'),pId=g('adminPId'),drop=g('adminAcDrop');let acIdx=-1;
+    function selectAcItem(p){pName.value=p.username||'';pId.value=p.discordId||'';drop.classList.remove('show');acIdx=-1;}
+    pName.addEventListener('input',()=>{
+      const q=pName.value.trim();if(!q){drop.classList.remove('show');return;}
+      const seen=new Set();
+      const matches=existingPeople.filter(p=>{
+        const k=personKey(p);if(!p.username||seen.has(k))return false;seen.add(k);
+        return p.username.toLowerCase().includes(q.toLowerCase());
+      }).slice(0,6);
+      if(!matches.length){drop.classList.remove('show');return;}
+      const rc={host:'var(--host)',cohost:'var(--cohost)',attendee:'var(--attendee)'};
+      drop.innerHTML=matches.map((p,i)=>{
+        const rank=rankFor(personKey(p));
+        return `<div class="ac-item" data-idx="${i}"><div class="ac-avatar" style="background:${rc[p.role]}22;color:${rc[p.role]}">${esc(initials(p.username))}</div><div class="ac-info"><div class="ac-name">${esc(p.username)}</div><div class="ac-sub">${p.discordId?esc(p.discordId):'no ID'}</div></div>${rank?`<span class="rank-badge sm">${esc(rank)}</span>`:''}</div>`;
+      }).join('');
+      drop._matches=matches;drop.classList.add('show');acIdx=-1;
+    });
+    pName.addEventListener('keydown',e=>{
+      const items=[...drop.querySelectorAll('.ac-item')];if(!items.length)return;
+      if(e.key==='ArrowDown'){e.preventDefault();acIdx=Math.min(acIdx+1,items.length-1);items.forEach((it,i)=>it.classList.toggle('active',i===acIdx));}
+      else if(e.key==='ArrowUp'){e.preventDefault();acIdx=Math.max(acIdx-1,0);items.forEach((it,i)=>it.classList.toggle('active',i===acIdx));}
+      else if(e.key==='Enter'&&acIdx>=0){e.preventDefault();selectAcItem(drop._matches[acIdx]);}
+      else if(e.key==='Escape'){drop.classList.remove('show');}
+    });
+    drop.addEventListener('click',e=>{const item=e.target.closest('.ac-item');if(!item)return;selectAcItem(drop._matches[+item.dataset.idx]);});
+
+    g('confirmBtn').onclick=()=>{
+      const username=pName.value.trim(),discordId=pId.value.trim();
+      const host=parseInt(g('adminHost').value,10)||0;
+      const cohost=parseInt(g('adminCohost').value,10)||0;
+      const attendee=parseInt(g('adminAttendee').value,10)||0;
+      const note=g('adminNote').value.trim();
+      if(!username&&!discordId){showToast('Add a username or ID first.',true);return;}
+      if(!host&&!cohost&&!attendee){showToast('Enter at least one non-zero amount.',true);return;}
+      const key=(discordId||username).toLowerCase();
+      state.adjustments.push({id:uid(),key,username,discordId,host,cohost,attendee,note,createdAt:new Date().toISOString()});
+      saveEvents();render();renderAdminAdjList();
+      showToast(`Applied ${[host&&`${host>0?'+':''}${host}H`,cohost&&`${cohost>0?'+':''}${cohost}C`,attendee&&`${attendee>0?'+':''}${attendee}A`].filter(Boolean).join(' ')} to ${username||discordId} (all-time)`);
+      g('adminHost').value='0';g('adminCohost').value='0';g('adminAttendee').value='0';g('adminNote').value='';
+    };
+    g('adminAdjList').addEventListener('click',e=>{
+      const btn=e.target.closest('[data-act="del-adj"]');if(!btn)return;
+      const idx=state.adjustments.findIndex(a=>a.id===btn.dataset.aid);if(idx===-1)return;
+      const removed=state.adjustments[idx];
+      state.adjustments.splice(idx,1);saveEvents();render();renderAdminAdjList();
+      showToast('Adjustment removed',false,()=>{state.adjustments.splice(idx,0,removed);saveEvents();render();renderAdminAdjList();});
+    });
+  });
+}
 
 /* View tabs */
 let activeView='events';
@@ -1141,7 +1291,7 @@ function openAttendanceModal(eventId){
 /* Profile modal */
 function openProfileModal(key){
   const prof=buildProfile(key);
-  if(!prof.eventCount&&!prof.username&&!prof.discordId){showToast('No data for this person.',true);return;}
+  if(!prof.eventCount&&!prof.username&&!prof.discordId&&!prof.host&&!prof.cohost&&!prof.attendee){showToast('No data for this person.',true);return;}
   const name=prof.username||prof.discordId||'Unknown';
   const totalEvents=state.events.length;
   const pct=totalEvents?Math.round((prof.eventCount/totalEvents)*100):0;
@@ -1171,6 +1321,16 @@ function openProfileModal(key){
       <span style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10px;padding:2px 7px;border-radius:2px;background:${rc[ev.role]}14;color:${rc[ev.role]}">${ev.role}</span>
     </div>`;
   }).join('');
+
+  const key2=key;
+  const adjList=adjustmentsFor(key2);
+  const adjHtml=adjList.length?`<div style="margin-top:14px;"><div class="profile-section-title" style="margin-bottom:8px">Manual adjustments</div>${adjList.map(a=>{
+    const parts=[];
+    if(a.host)parts.push(`<span style="color:var(--host)">${a.host>0?'+':''}${a.host}H</span>`);
+    if(a.cohost)parts.push(`<span style="color:var(--cohost)">${a.cohost>0?'+':''}${a.cohost}C</span>`);
+    if(a.attendee)parts.push(`<span style="color:var(--attendee)">${a.attendee>0?'+':''}${a.attendee}A</span>`);
+    return `<div class="profile-meta-row"><span class="profile-meta-key">${esc(a.note||'Manual adjustment')}</span><span style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10.5px">${parts.join(' ')}</span></div>`;
+  }).join('')}</div>`:'';
 
   openModal(`
     <div class="profile-header">
@@ -1207,6 +1367,7 @@ function openProfileModal(key){
     </div>
 
     ${recent.length?`<div style="margin-top:14px;"><div class="profile-section-title" style="margin-bottom:8px">Recent events</div>${recentHtml}</div>`:''}
+    ${adjHtml}
 
     <div class="modal-actions">
       <button class="btn-secondary" id="shareBtn" title="${state.webhookUrl?'Send these stats to the configured Discord webhook':'No webhook configured'}"><svg class="icon" aria-hidden="true"><use href="#i-brand-discord"></use></svg> Share</button>
@@ -1281,7 +1442,7 @@ function copyRoster(eventId){
 
 /* CSV export */
 function exportLeaderboardCsv(){
-  const data=leaderboardData(eventsForPeriod(lbPeriod));
+  const data=leaderboardData(eventsForPeriod(lbPeriod),lbPeriod==='total');
   if(!data.length){showToast('Nothing to export yet.',true);return;}
   const rows=[['Name','Discord ID','Host','Co-Host','Attendee','Events','Total Score']];
   [...data].sort((a,b)=>b.total-a.total).forEach(e=>rows.push([e.username||'',e.discordId||'',e.host,e.cohost,e.attendee,e.eventCount,e.total]));
@@ -1293,7 +1454,7 @@ function exportLeaderboardCsv(){
 g('exportCsvBtn').addEventListener('click',exportLeaderboardCsv);
 
 /* Leaderboard */
-function leaderboardData(eventsSubset){
+function leaderboardData(eventsSubset,includeAdjustments){
   const map=new Map();
   for(const ev of eventsSubset){
     for(const role of['host','cohost','attendee']){
@@ -1306,10 +1467,11 @@ function leaderboardData(eventsSubset){
       }
     }
   }
+  if(includeAdjustments)applyAdjustmentsToMap(map);
   return [...map.values()].map(e=>({...e,eventCount:e.events.size,hosting:e.host+e.cohost,total:e.host*3+e.cohost*2+e.attendee}));
 }
 function overallPlacement(key){
-  const ranked=leaderboardData(state.events).filter(e=>e.total>0).sort((a,b)=>b.total-a.total);
+  const ranked=leaderboardData(state.events,true).filter(e=>e.total>0).sort((a,b)=>b.total-a.total);
   const idx=ranked.findIndex(e=>e.key===key);
   return idx===-1?null:idx+1;
 }
@@ -1333,7 +1495,7 @@ function renderLeaderboard(){
   const list=g('lbList');
   const prevPositions=new Map();
   list.querySelectorAll('.lb-row[data-key]').forEach(row=>{prevPositions.set(row.dataset.key,row.getBoundingClientRect());});
-  const evSubset=eventsForPeriod(lbPeriod);const data=leaderboardData(evSubset);
+  const evSubset=eventsForPeriod(lbPeriod);const data=leaderboardData(evSubset,lbPeriod==='total');
   if(!data.length){list.innerHTML=`<div class="lb-empty"><svg class="icon" aria-hidden="true"><use href="#i-shield-off"></use></svg>${lbPeriod==='total'?'No activity recorded.':'No events in this period.'}</div>`;return;}
   const sortKey=lbMetric==='total'?'total':lbMetric==='events'?'eventCount':'hosting';
   const sorted=[...data].sort((a,b)=>b[sortKey]-a[sortKey]).filter(e=>e[sortKey]>0).slice(0,10);
@@ -1382,7 +1544,7 @@ function renderStats(){
   const seen=new Set();
   evSubset.forEach(ev=>['host','cohost','attendee'].forEach(role=>(ev[role]||[]).forEach(p=>seen.add(personKey(p)))));
   const avgAtt=evSubset.length?Math.round(evSubset.reduce((s,ev)=>s+(ev.host?.length||0)+(ev.cohost?.length||0)+(ev.attendee?.length||0),0)/evSubset.length):0;
-  const data=leaderboardData(evSubset);
+  const data=leaderboardData(evSubset,lbPeriod==='total');
   const topHost=[...data].sort((a,b)=>b.host-a.host)[0];
   animateCount(g('statEvents'),evSubset.length);
   animateCount(g('statPeople'),seen.size);
