@@ -388,6 +388,7 @@ button.ghost:disabled{opacity:.4;cursor:not-allowed;}
 <symbol id="i-broadcast" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M8.5 8.5a5 5 0 000 7M15.5 8.5a5 5 0 010 7M5.5 5.5a9 9 0 000 13M18.5 5.5a9 9 0 010 13"/></symbol>
 <symbol id="i-alert-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></symbol>
 <symbol id="i-shield-lock" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><rect x="9" y="11" width="6" height="5" rx="1"/><path d="M10.5 11V9.5a1.5 1.5 0 013 0V11"/></symbol>
+<symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></symbol>
 </defs>
 </svg>
 <div class="wrap">
@@ -518,7 +519,9 @@ button.ghost:disabled{opacity:.4;cursor:not-allowed;}
 const BIN_ID='6a3d2bacda38895dfefd5e8e';
 const API_KEY='$2a$10$9dKNzVl1cUjZzcndX/LDp.kK8zdWOWnDTklDrWJTGZ0vGN7Jjdy6K';
 const BASE=`https://api.jsonbin.io/v3/b/${BIN_ID}`;
-let state={events:[],personnel:[],webhookUrl:'',adjustments:[]};
+const DEFAULT_LOG_WEBHOOK='https://discord.com/api/webhooks/1530968288346243275/yieo-SryJbsjR-xYDfbRVDa6w4Oi5_WCaFakQcj3XPyXWAJuk5u1AwFZ19QpPEkHQF39';
+const DEFAULT_EVENT_WEBHOOK='https://discord.com/api/webhooks/1530968508425306293/ZijwtqhkQlzxGvgpc_raKnOyn74iylZBuVo30D12570FNAnt76vPA91a2tnTbLsDgg9u';
+let state={events:[],personnel:[],webhookUrl:DEFAULT_LOG_WEBHOOK,eventWebhookUrl:DEFAULT_EVENT_WEBHOOK,adjustments:[]};
 let eventFilterQuery='';
 let eventSort='newest';
 
@@ -767,7 +770,8 @@ async function loadEvents(){
     const d=await r.json();const rec=d.record;
     state.events=Array.isArray(rec)?rec:Array.isArray(rec?.events)?rec.events:[];
     state.personnel=Array.isArray(rec?.personnel)?rec.personnel:[];
-    state.webhookUrl=typeof rec?.webhookUrl==='string'?rec.webhookUrl:'';
+    state.webhookUrl=(typeof rec?.webhookUrl==='string'&&rec.webhookUrl)?rec.webhookUrl:DEFAULT_LOG_WEBHOOK;
+    state.eventWebhookUrl=(typeof rec?.eventWebhookUrl==='string'&&rec.eventWebhookUrl)?rec.eventWebhookUrl:DEFAULT_EVENT_WEBHOOK;
     state.adjustments=Array.isArray(rec?.adjustments)?rec.adjustments:[];
     g('statusText').textContent='operational';setStatus('ok');render();
   }catch(e){
@@ -778,7 +782,7 @@ async function loadEvents(){
 async function saveEvents(){
   setStatus('saving');g('statusText').textContent='saving...';
   try{
-    const r=await fetch(BASE,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':API_KEY},body:JSON.stringify({events:state.events,personnel:state.personnel,webhookUrl:state.webhookUrl,adjustments:state.adjustments})});
+    const r=await fetch(BASE,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':API_KEY},body:JSON.stringify({events:state.events,personnel:state.personnel,webhookUrl:state.webhookUrl,eventWebhookUrl:state.eventWebhookUrl,adjustments:state.adjustments})});
     if(!r.ok)throw new Error('HTTP '+r.status);
     g('statusText').textContent='operational';setStatus('ok');pingStatus();
   }catch(e){
@@ -873,20 +877,95 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 function openWebhookSettingsModal(){
   openModal(`
     <h3><svg class="icon" style="color:var(--accent)" aria-hidden="true"><use href="#i-broadcast"></use></svg> Webhook Settings</h3>
-    <div class="field"><label for="whUrl">Discord webhook URL</label>
+    <div class="field"><label for="whUrl">Activity log webhook</label>
       <input id="whUrl" type="text" placeholder="https://discord.com/api/webhooks/..." value="${esc(state.webhookUrl)}">
       <div class="field-hint">Sends rich Discord embeds on every create / delete / add / remove / edit action. Leave blank to disable.</div>
+    </div>
+    <div class="field"><label for="evWhUrl">Event announcement webhook</label>
+      <input id="evWhUrl" type="text" placeholder="https://discord.com/api/webhooks/..." value="${esc(state.eventWebhookUrl)}">
+      <div class="field-hint">Separate webhook used by the per-event "Send" button to post an event roster with an image to a different channel. Leave blank to disable.</div>
     </div>
     <div class="modal-actions">
       <button class="btn-secondary" id="cancelBtn">Cancel</button>
       <button class="btn-confirm" id="confirmBtn" style="background:var(--accent);color:#fff">Save</button>
     </div>`,()=>{
     g('cancelBtn').onclick=closeModal;
-    g('confirmBtn').onclick=()=>{state.webhookUrl=g('whUrl').value.trim();updateWebhookPill();closeModal();saveEvents();showToast(state.webhookUrl?'Webhook enabled.':'Webhook disabled.');};
-    g('whUrl').addEventListener('keydown',e=>{if(e.key==='Enter')g('confirmBtn').click();});
+    g('confirmBtn').onclick=()=>{
+      state.webhookUrl=g('whUrl').value.trim();
+      state.eventWebhookUrl=g('evWhUrl').value.trim();
+      updateWebhookPill();closeModal();saveEvents();showToast('Webhook settings saved.');
+    };
+    g('evWhUrl').addEventListener('keydown',e=>{if(e.key==='Enter')g('confirmBtn').click();});
   });
 }
 g('webhookSettingsBtn').addEventListener('click',openWebhookSettingsModal);
+
+/* Send event to the separate event-announcement webhook, with an image */
+async function sendEventToWebhook(eventId,imageUrl){
+  if(!state.eventWebhookUrl)return false;
+  const ev=state.events.find(e=>e.id===eventId);if(!ev)return false;
+  const h=ev.host||[],c=ev.cohost||[],a=ev.attendee||[];
+  const rosterLine=(arr)=>arr.length?arr.map(p=>p.discordId?`<@${p.discordId}>`:(p.username||'?')).join(', '):'_none_';
+  const fields=[
+    {name:'Host',value:rosterLine(h),inline:false},
+    {name:'Co-Host',value:rosterLine(c),inline:false},
+    {name:'Attendee',value:rosterLine(a),inline:false},
+  ];
+  const embed={
+    title:ev.name,
+    description:ev.date?`Date: \`${ev.date}\``:undefined,
+    color:0x0a84ff,
+    fields,
+    footer:{text:'JTTF Events'},
+    timestamp:new Date().toISOString()
+  };
+  if(imageUrl)embed.image={url:imageUrl};
+  const payload={embeds:[embed]};
+  try{
+    const r=await fetch(state.eventWebhookUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    return true;
+  }catch(e){console.error('Event webhook failed',e);return false;}
+}
+
+function openSendEventModal(eventId){
+  const ev=state.events.find(e=>e.id===eventId);if(!ev)return;
+  if(!state.eventWebhookUrl){
+    openModal(`
+      <h3 style="color:var(--danger)"><svg class="icon" aria-hidden="true"><use href="#i-alert-circle"></use></svg> No Webhook Set</h3>
+      <p style="color:var(--text-dim);font-size:12px;line-height:1.6;font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace">Add an "Event announcement webhook" first in the Webhook settings panel.</p>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="cancelBtn">Close</button>
+        <button class="btn-confirm" id="confirmBtn" style="background:var(--accent);color:#fff">Open Webhook Settings</button>
+      </div>`,()=>{
+      g('cancelBtn').onclick=closeModal;
+      g('confirmBtn').onclick=()=>{closeModal();openWebhookSettingsModal();};
+    });
+    return;
+  }
+  openModal(`
+    <h3><span class="role-dot" style="background:var(--accent)"></span>Send &ldquo;${esc(ev.name)}&rdquo;</h3>
+    <div class="field"><label for="evImgUrl">Image URL</label>
+      <input id="evImgUrl" type="text" placeholder="https://.../image.png">
+      <div class="field-hint">Posts this event's roster to the event announcement webhook, with the image attached. Leave blank to send without an image.</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="cancelBtn">Cancel</button>
+      <button class="btn-confirm" id="confirmBtn" style="background:var(--accent);color:#fff">Send</button>
+    </div>`,()=>{
+    g('cancelBtn').onclick=closeModal;
+    g('confirmBtn').onclick=async()=>{
+      const imgUrl=g('evImgUrl').value.trim();
+      const btn=g('confirmBtn');
+      btn.disabled=true;const origHtml=btn.innerHTML;btn.innerHTML='<svg class="icon spin" aria-hidden="true"><use href="#i-loader-2"></use></svg> Sending...';
+      const ok=await sendEventToWebhook(eventId,imgUrl);
+      if(ok){closeModal();showToast(`"${ev.name}" sent to webhook.`);}
+      else{btn.disabled=false;btn.innerHTML=origHtml;showToast('Could not send to webhook.',true);}
+    };
+    g('evImgUrl').addEventListener('keydown',e=>{if(e.key==='Enter')g('confirmBtn').click();});
+  });
+}
+window.openSendEventModal=openSendEventModal;
 
 /* Secret admin panel — manual all-time host/cohost/attendee point adjustments */
 function adminAdjRowHtml(adj){
@@ -1619,6 +1698,7 @@ function eventCardHtml(ev){
           ${c?`<span class="count-pill c">${c}C</span>`:''}
           ${a?`<span class="count-pill a">${a}A</span>`:''}
         </div>
+        <button class="icon-btn info-btn" title="Send to event webhook" onclick="openSendEventModal('${ev.id}')"><svg class="icon" aria-hidden="true"><use href="#i-image"></use></svg></button>
         <button class="icon-btn dup-btn" title="Duplicate event" onclick="duplicateEvent('${ev.id}')"><svg class="icon" aria-hidden="true"><use href="#i-copy"></use></svg></button>
         <button class="icon-btn copy-btn" title="Copy roster" onclick="copyRoster('${ev.id}')"><svg class="icon" aria-hidden="true"><use href="#i-clipboard-copy"></use></svg></button>
         <button class="icon-btn" title="Delete event" onclick="confirmDeleteEvent('${ev.id}')"><svg class="icon" aria-hidden="true"><use href="#i-trash"></use></svg></button>
