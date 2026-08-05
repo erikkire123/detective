@@ -1,0 +1,1809 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JTTF</title>
+  <link rel="icon" type="image/png" href="https://cdn.discordapp.com/attachments/1193617535904530505/1530380675352494150/1fb9e07e-7f6c-49e7-b4e8-e810535bf663-removebg-preview.png?ex=6a655d92&is=6a640c12&hm=dc1a3e1dabd0291ab9583e2d7e944b391d5a7f9391d048855d9316e36cc13bab&">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#101012;--surface:rgba(255,255,255,0.055);--surface-raised:rgba(255,255,255,0.09);--surface-hover:rgba(255,255,255,0.13);
+  --border:rgba(255,255,255,0.09);--border-light:rgba(255,255,255,0.17);
+  --text:#f5f5f7;--text-dim:#9a9a9f;--text-muted:#6c6c72;
+  --host:#ff9f0a;--host-dim:#ff9f0a1f;--host-glow:#ff9f0a4d;
+  --cohost:#5e5ce6;--cohost-dim:#5e5ce61f;--cohost-glow:#5e5ce64d;
+  --attendee:#30d158;--attendee-dim:#30d1581f;
+  --danger:#ff453a;--danger-dim:#ff453a1f;
+  --rank:#bf5af2;--rank-dim:#bf5af21f;
+  --accent:#0a84ff;--accent-dim:#0a84ff1f;--r:18px;--r-sm:12px;
+  --blur:blur(28px) saturate(160%);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+.icon{width:1em;height:1em;display:inline-block;vertical-align:-0.125em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;overflow:visible;}
+body{background:var(--bg);
+  color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',sans-serif;min-height:100vh;font-size:14px;overflow-x:hidden;-webkit-font-smoothing:antialiased;}
+.wrap{max-width:1320px;margin:0 auto;padding:36px 24px 120px;position:relative;z-index:1;}
+.layout{display:grid;grid-template-columns:1fr 300px;gap:22px;align-items:start;}
+@media(max-width:920px){.layout{grid-template-columns:1fr;}}
+.main-col{min-width:0;}
+
+/* Header */
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:36px;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--border);position:relative;}
+.title-block{display:flex;align-items:center;gap:15px;}
+.logo{width:44px;height:44px;flex-shrink:0;position:relative;display:flex;align-items:center;justify-content:center;background:none;}
+.logo svg{width:100%;height:100%;display:block;}
+.logo img{width:100%;height:100%;object-fit:contain;display:block;background:transparent;}
+.title-block h1{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',sans-serif;font-size:1.5rem;font-weight:700;letter-spacing:-0.02em;color:var(--text);}
+.sub{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',sans-serif;font-size:0.72rem;color:var(--text-muted);letter-spacing:0;margin-top:2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:500;}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--attendee);flex-shrink:0;transition:background .3s;}
+.status-dot.ok{background:var(--attendee);animation:pulse-dot 2.4s ease-in-out infinite;position:relative;}
+.status-dot.err{background:var(--danger);}
+.status-dot.saving{background:var(--accent);animation:pulse-dot 0.8s ease-in-out infinite;}
+@keyframes pulse-dot{0%,100%{opacity:1;}50%{opacity:.35;}}
+.status-dot.ping::after{content:'';position:absolute;inset:-2px;border-radius:50%;border:1.5px solid var(--attendee);animation:status-ping .6s cubic-bezier(.22,.61,.36,1) forwards;}
+@keyframes status-ping{0%{transform:scale(1);opacity:.9;}100%{transform:scale(2.6);opacity:0;}}
+.webhook-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:2px;background:var(--surface-raised);border:1px solid var(--border-light);color:var(--text-dim);cursor:help;transition:all .2s;}
+.webhook-pill.live{color:var(--accent);border-color:var(--accent-dim);}
+.webhook-pill i{font-size:9px;}
+.header-right{display:flex;align-items:center;gap:10px;}
+.search-wrap{position:relative;display:flex;align-items:center;}
+.search-wrap .search-icon{position:absolute;left:10px;color:var(--text-dim);font-size:14px;pointer-events:none;transition:color .2s;}
+.search-wrap:focus-within .search-icon{color:var(--accent);}
+.search-kbd{position:absolute;right:8px;font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:9px;color:var(--text-muted);background:var(--surface-raised);border:1px solid var(--border-light);border-radius:2px;padding:1px 5px;pointer-events:none;transition:opacity .15s;}
+#globalSearch:focus ~ .search-kbd{opacity:0;}
+#globalSearch{background:var(--surface-raised);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid var(--border);border-radius:999px;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',sans-serif;font-size:13px;padding:9px 30px 9px 32px;width:200px;transition:border-color .2s,width .25s,box-shadow .2s,background .2s;letter-spacing:0;}
+#globalSearch:focus{outline:none;border-color:var(--accent);width:240px;background:var(--surface-hover);box-shadow:0 0 0 4px var(--accent-dim);}
+#globalSearch::placeholder{color:var(--text-muted);}
+.search-results{position:absolute;top:calc(100% + 8px);left:0;right:0;background:var(--surface-raised);border:1px solid var(--border-light);border-radius:var(--r);z-index:100;overflow:hidden;display:none;min-width:300px;box-shadow:0 16px 48px rgba(0,0,0,0.55);animation:dropdown-in .15s ease;}
+.search-results.show{display:block;}
+@keyframes dropdown-in{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+.sr-item{padding:9px 13px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background .12s;border-bottom:1px solid var(--border);animation:sr-item-in .2s ease both;}
+.sr-item:nth-child(1){animation-delay:0s;}.sr-item:nth-child(2){animation-delay:.02s;}.sr-item:nth-child(3){animation-delay:.04s;}.sr-item:nth-child(4){animation-delay:.06s;}.sr-item:nth-child(5){animation-delay:.08s;}.sr-item:nth-child(6){animation-delay:.1s;}
+@keyframes sr-item-in{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
+.sr-item:last-child{border-bottom:none;}
+.sr-item:hover,.sr-item.active{background:var(--surface-hover);}
+.sr-avatar{width:28px;height:28px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',sans-serif;font-weight:700;font-size:.7rem;flex-shrink:0;}
+.sr-info{flex:1;min-width:0;}
+.sr-name{font-weight:500;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sr-meta{font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10px;color:var(--text-dim);margin-top:1px;}
+.sr-badge{font-size:10px;padding:2px 7px;border-radius:2px;font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;letter-spacing:.05em;flex-shrink:0;}
+.sr-badge.host{background:var(--host-dim);color:var(--host);}
+.sr-badge.cohost{background:var(--cohost-dim);color:var(--cohost);}
+.sr-badge.attendee{background:var(--attendee-dim);color:var(--attendee);}
+.sr-empty{padding:14px;text-align:center;color:var(--text-muted);font-size:12px;font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;}
+
+button.primary{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',sans-serif;font-weight:600;font-size:13.5px;letter-spacing:0;background:linear-gradient(180deg,#2b9bff,#0a84ff);color:#fff;border:none;padding:9px 18px;border-radius:999px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:box-shadow .18s,transform .1s,filter .18s;white-space:nowrap;box-shadow:0 1px 2px #0a84ff33,0 6px 16px #0a84ff3d;}
+button.primary:hover{filter:brightness(1.06);box-shadow:0 1px 2px #0a84ff33,0 8px 22px #0a84ff55;}
+button.primary:active{transform:scale(.97);}
+button.ghost{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',sans-serif;font-weight:600;font-size:13.5px;letter-spacing:0;background:var(--surface-raised);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);color:var(--text-dim);border:1px solid var(--border);padding:9px 16px;border-radius:999px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .18s;white-space:nowrap;}
+button.ghost:hover{border-color:var(--border-light);color:var(--text);background:var(--surface-hover);}
+button.ghost:disabled{opacity:.4;cursor:not-allowed;}
+
+/* View tabs */
+.view-tabs{display:flex;gap:2px;margin-bottom:22px;border-bottom:1px solid var(--border);}
+.view-tab{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',sans-serif;font-weight:600;font-size:14px;letter-spacing:0;background:transparent;border:none;color:var(--text-dim);padding:10px 18px 12px;cursor:pointer;display:flex;align-items:center;gap:7px;position:relative;transition:color .18s;border-radius:var(--r-sm) var(--r-sm) 0 0;}
+.view-tab:hover{color:var(--text);background:var(--surface);}
+.view-tab.active{color:var(--accent);}
+.view-tab.active::after{content:'';position:absolute;bottom:-1px;left:8px;right:8px;height:2px;background:var(--accent);border-radius:2px 2px 0 0;}
+.view-tab i{font-size:14px;}
+
+/* Toolbar */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.filter-wrap{position:relative;display:flex;align-items:center;flex:1;min-width:180px;}
+.filter-wrap i{position:absolute;left:10px;color:var(--text-dim);font-size:13px;pointer-events:none;}
+#eventFilter,#personnelSearch{width:100%;background:var(--surface-raised);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid var(--border);border-radius:999px;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',sans-serif;font-size:13px;padding:9px 12px 9px 30px;letter-spacing:0;transition:border-color .2s,background .2s;}
+#eventFilter:focus,#personnelSearch:focus{outline:none;border-color:var(--accent);background:var(--surface-hover);}
+#eventFilter::placeholder,#personnelSearch::placeholder{color:var(--text-muted);}
+.sort-select{background:var(--surface-raised);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid var(--border);border-radius:999px;color:var(--text-dim);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',sans-serif;font-size:12.5px;font-weight:500;letter-spacing:0;padding:9px 14px;cursor:pointer;transition:border-color .2s;}
+.sort-select:hover{border-color:var(--border-light);}
+.sort-select:focus{outline:none;border-color:var(--accent);}
+.toolbar-count{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',sans-serif;font-size:12px;color:var(--text-muted);white-space:nowrap;letter-spacing:0;}
+
+/* Event cards */
+.event-card{background:var(--surface);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid var(--border);border-radius:var(--r);margin-bottom:14px;overflow:hidden;transition:border-color .2s,box-shadow .25s cubic-bezier(.22,.61,.36,1),transform .25s cubic-bezier(.22,.61,.36,1);position:relative;animation:card-in .4s cubic-bezier(.22,.61,.36,1) both;box-shadow:0 1px 2px rgba(0,0,0,0.3),0 8px 28px rgba(0,0,0,0.35);}
+.event-card.fade-out{animation:card-out .18s ease forwards;}
+@keyframes card-in{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+@keyframes card-out{from{opacity:1;transform:scale(1);}to{opacity:0;transform:scale(.97);}}
+.event-card:hover{border-color:var(--border-light);box-shadow:0 12px 36px rgba(0,0,0,0.5);transform:translateY(-2px);}
+.event-card:nth-child(1){animation-delay:.04s;}.event-card:nth-child(2){animation-delay:.08s;}.event-card:nth-child(3){animation-delay:.12s;}.event-card:nth-child(4){animation-delay:.16s;}.event-card:nth-child(5){animation-delay:.20s;}
+.event-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 14px 19px;border-bottom:1px solid var(--border);gap:12px;}
+.event-head-left{display:flex;align-items:center;gap:12px;min-width:0;flex:1;}
+.event-icon{width:34px;height:34px;border-radius:var(--r-sm);background:var(--surface-raised);border:1px solid var(--border-light);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--accent);flex-shrink:0;}
+.event-name-row{min-width:0;flex:1;}
+.event-name{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',sans-serif;font-size:1.05rem;font-weight:600;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:text;border-radius:6px;padding:1px 5px;margin:-1px -5px;transition:background .12s;}
+.event-name:hover{background:var(--surface-raised);}
+.event-name-input{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',sans-serif;font-size:1.05rem;font-weight:600;letter-spacing:-0.01em;background:var(--surface-hover);border:1px solid var(--accent);border-radius:6px;padding:1px 5px;color:var(--text);width:100%;}
+.event-name-input:focus{outline:none;box-shadow:0 0 0 2px var(--accent-dim);}
+.event-meta{font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:.63rem;color:var(--text-dim);margin-top:2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.meta-sep{color:var(--text-muted);}
+.event-date-edit{cursor:pointer;border-bottom:1px dotted var(--text-muted);transition:color .12s;}
+.event-date-edit:hover{color:var(--accent);}
+.event-date-input{font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:.63rem;background:var(--bg);border:1px solid var(--accent);border-radius:2px;color:var(--text);padding:0 3px;width:80px;}
+.event-head-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.count-pills{display:flex;gap:4px;}
+.count-pill{font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10px;padding:2px 7px;border-radius:2px;display:flex;align-items:center;gap:3px;border:1px solid;}
+.count-pill.h{background:var(--host-dim);color:var(--host);border-color:var(--host-dim);}
+.count-pill.c{background:var(--cohost-dim);color:var(--cohost);border-color:var(--cohost-dim);}
+.count-pill.a{background:var(--attendee-dim);color:var(--attendee);border-color:var(--attendee-dim);}
+.icon-btn{width:28px;height:28px;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:border-color .15s,color .15s,background .15s,transform .12s;flex-shrink:0;}
+.icon-btn:hover{transform:translateY(-1px);}
+.icon-btn:active{transform:translateY(0) scale(.92);}
+.icon-btn:hover{border-color:var(--danger);color:var(--danger);background:var(--danger-dim);}
+.icon-btn.copy-btn:hover{border-color:var(--cohost);color:var(--cohost);background:var(--cohost-dim);}
+.icon-btn.info-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);}
+.icon-btn.dup-btn:hover{border-color:var(--attendee);color:var(--attendee);background:var(--attendee-dim);}
+
+/* Attendance bar */
+.attendance-bar-wrap{padding:10px 19px 11px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+.attendance-label{font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10px;color:var(--text-dim);white-space:nowrap;flex-shrink:0;letter-spacing:.06em;text-transform:uppercase;}
+.attendance-track{flex:1;height:5px;background:var(--surface-raised);border-radius:999px;overflow:hidden;border:1px solid var(--border);}
+.attendance-fill{height:100%;border-radius:999px;transition:width .5s cubic-bezier(.22,.61,.36,1);background:var(--accent);}
+.attendance-fill.high{background:var(--attendee);}
+.attendance-fill.low{background:var(--danger);opacity:.7;}
+.attendance-pct{font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:11px;color:var(--accent);white-space:nowrap;min-width:32px;text-align:right;font-weight:600;}
+
+/* Roles */
+.roles-grid{display:grid;grid-template-columns:repeat(3,1fr);}
+@media(max-width:640px){.roles-grid{grid-template-columns:1fr;}}
+.role-col{padding:13px 16px;position:relative;}
+.role-col:not(:last-child){border-right:1px solid var(--border);}
+@media(max-width:640px){.role-col:not(:last-child){border-right:none;border-bottom:1px solid var(--border);}}
+.role-col.drag-over{background:var(--surface-hover);}
+.role-col.drag-over::after{content:'';position:absolute;inset:4px;border:1.5px dashed var(--accent);border-radius:var(--r-sm);opacity:.6;pointer-events:none;animation:drag-zone-pulse 1s ease-in-out infinite;}
+@keyframes drag-zone-pulse{0%,100%{opacity:.35;}50%{opacity:.75;}}
+.role-label{font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:.13em;margin-bottom:9px;display:flex;align-items:center;gap:6px;}
+.role-col.host .role-label{color:var(--host);}
+.role-col.cohost .role-label{color:var(--cohost);}
+.role-col.attendee .role-label{color:var(--attendee);}
+.role-label .cnt{background:var(--surface-raised);border-radius:2px;padding:1px 5px;font-size:.6rem;color:var(--text-muted);}
+.person-list{display:flex;flex-direction:column;gap:4px;margin-bottom:7px;}
+
+/* Person pill */
+.person-pill{display:flex;align-items:center;gap:7px;background:var(--surface-raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:5px 8px 5px 5px;transition:border-color .15s,background .15s,opacity .15s;animation:pill-in .22s ease both;position:relative;}
+.person-pill.dragging{opacity:.35;transform:scale(.96);}
+.person-pill.landed{animation:pill-landed .4s cubic-bezier(.22,.61,.36,1);}
+@keyframes pill-landed{0%{background:var(--accent-dim);border-color:var(--accent);}100%{background:var(--surface-raised);border-color:var(--border);}}
+@keyframes pill-in{from{opacity:0;transform:translateX(-8px);}to{opacity:1;transform:translateX(0);}}
+.person-pill:hover{border-color:var(--border-light);background:var(--surface-hover);}
+.pill-clickable{cursor:pointer;flex:1;display:flex;align-items:center;gap:7px;min-width:0;}
+.pill-clickable:hover .person-name{color:var(--accent);}
+.drag-handle{cursor:grab;color:var(--text-muted);font-size:11px;flex-shrink:0;}
+.drag-handle:hover{color:var(--text-dim);}
+.avatar{width:22px;height:22px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',sans-serif;font-weight:700;font-size:.65rem;flex-shrink:0;}
+.role-col.host .avatar{background:var(--host-dim);color:var(--host);}
+.role-col.cohost .avatar{background:var(--cohost-dim);color:var(--cohost);}
+.role-col.attendee .avatar{background:var(--attendee-dim);color:var(--attendee);}
+.person-name{font-size:12.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;transition:color .15s;}
+.person-id{display:none;}
+
+/* Per-person attendance pct badge */
+.person-pct{font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:9px;padding:1px 5px;border-radius:2px;white-space:nowrap;flex-shrink:0;letter-spacing:.03em;}
+.person-pct.high{background:var(--attendee-dim);color:var(--attendee);}
+.person-pct.mid{background:var(--host-dim);color:var(--host);}
+.person-pct.low{background:var(--danger-dim);color:var(--danger);}
+
+.remove-x{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:13px;line-height:1;padding:0 1px;flex-shrink:0;transition:color .12s,transform .12s;}
+.remove-x:hover{color:var(--danger);transform:scale(1.2);}
+.add-row{display:flex;align-items:center;gap:6px;background:transparent;border:1px dashed var(--border);border-radius:var(--r-sm);padding:5px 10px 5px 7px;cursor:pointer;color:var(--text-muted);font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:11px;letter-spacing:.05em;transition:all .18s;width:100%;text-align:left;}
+.add-row:hover{border-color:var(--accent);color:var(--accent);}
+
+/* Empty state */
+.empty-state{text-align:center;padding:64px 24px;border:1px dashed var(--border);border-radius:var(--r);color:var(--text-dim);}
+.empty-icon{font-size:36px;color:var(--text-muted);margin-bottom:14px;}
+.empty-state h3{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',sans-serif;font-size:1.1rem;font-weight:600;letter-spacing:-0.01em;margin-bottom:7px;color:var(--text);}
+.empty-state p{font-size:12px;font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;color:var(--text-muted);}
+
+/* Leaderboard */
+.leaderboard{background:var(--surface);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid var(--border);border-radius:var(--r);padding:18px;position:sticky;top:32px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,0.3),0 12px 36px rgba(0,0,0,0.4);}
+@media(max-width:920px){.leaderboard{position:static;}}
+.lb-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;}
+.lb-title{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',sans-serif;font-weight:700;font-size:1.05rem;letter-spacing:-0.01em;display:flex;align-items:center;gap:7px;color:var(--text);}
+.lb-export-btn{background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:3px;border-radius:3px;transition:all .15s;}
+.lb-export-btn:hover{color:var(--accent);background:var(--accent-dim);}
+.lb-period-tabs{display:flex;gap:2px;margin-bottom:8px;background:var(--bg);border-radius:999px;padding:3px;}
+.lb-period-tab{flex:1;text-align:center;padding:5px 0;border-radius:999px;cursor:pointer;font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:.57rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);transition:all .15s;border:none;background:transparent;}
+.lb-period-tab.active{background:var(--surface-raised);color:var(--text);border:1px solid var(--border-light);}
+.lb-range{font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:.58rem;color:var(--text-muted);margin-bottom:10px;text-align:center;letter-spacing:.04em;min-height:13px;}
+.lb-tabs{display:flex;gap:2px;margin-bottom:12px;background:var(--bg);border-radius:999px;padding:3px;}
+.lb-tab{flex:1;text-align:center;padding:5px 0;border-radius:999px;cursor:pointer;font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);transition:all .15s;border:none;background:transparent;}
+.lb-tab.active{background:var(--surface-raised);color:var(--accent);}
+.lb-list{display:flex;flex-direction:column;gap:2px;}
+.lb-row{display:flex;align-items:center;gap:9px;padding:8px 6px;border-radius:var(--r-sm);transition:background .15s;cursor:pointer;animation:lb-in .28s ease both;}
+@keyframes lb-in{from{opacity:0;transform:translateX(10px);}to{opacity:1;transform:translateX(0);}}
+.lb-row:hover{background:var(--surface-raised);}
+.lb-rank{font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:.65rem;color:var(--text-muted);width:14px;flex-shrink:0;text-align:center;}
+.lb-avatar{width:24px;height:24px;border-radius:var(--r-sm);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',sans-serif;font-weight:700;font-size:.65rem;background:var(--surface-raised);color:var(--text-dim);border:1px solid var(--border-light);}
+.lb-info{flex:1;min-width:0;}
+.lb-name{font-size:12.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lb-breakdown{font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:9.5px;color:var(--text-muted);display:flex;gap:5px;margin-top:1px;}
+.lb-breakdown span.h{color:var(--host);}.lb-breakdown span.c{color:var(--cohost);}.lb-breakdown span.a{color:var(--attendee);}
+.lb-score{font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-weight:600;font-size:13px;color:var(--accent);flex-shrink:0;}
+.lb-streak{font-size:9px;color:var(--text-muted);margin-left:2px;}
+.lb-empty{text-align:center;padding:24px 10px;color:var(--text-muted);font-size:11px;font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;}
+.lb-empty i{font-size:20px;display:block;margin-bottom:8px;}
+.stats-row{margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.stat-chip{background:var(--surface-raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:9px 10px;text-align:center;}
+.stat-chip-val{font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:15px;color:var(--accent);font-weight:600;}
+.stat-chip-lbl{font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:9.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-top:2px;}
+
+/* Modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .2s;}
+.overlay.show{opacity:1;pointer-events:auto;}
+.modal{background:var(--surface-raised);backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);border:1px solid var(--border-light);border-radius:20px;padding:24px;width:100%;max-width:440px;transform:translateY(14px) scale(.95);transition:transform .28s cubic-bezier(.22,.61,.36,1);position:relative;overflow:hidden;max-height:90vh;overflow-y:auto;box-shadow:0 24px 70px rgba(0,0,0,0.65);}
+.overlay.show .modal{transform:translateY(0) scale(1);}
+.modal h3{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',sans-serif;font-size:1.15rem;font-weight:700;letter-spacing:-0.015em;margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+.modal h3 svg,.modal h3 .role-dot{animation:modal-icon-pop .38s cubic-bezier(.34,1.56,.64,1) .08s both;}
+@keyframes modal-icon-pop{from{transform:scale(0) rotate(-25deg);}to{transform:scale(1) rotate(0);}}
+.overlay.show .field{animation:field-rise .3s cubic-bezier(.22,.61,.36,1) both;}
+.overlay.show .field:nth-of-type(1){animation-delay:.04s;}.overlay.show .field:nth-of-type(2){animation-delay:.08s;}.overlay.show .field:nth-of-type(3){animation-delay:.12s;}
+@keyframes field-rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.role-dot{width:8px;height:8px;border-radius:1px;flex-shrink:0;}
+.field{margin-bottom:13px;}
+.field label{display:block;font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin-bottom:5px;}
+.field-inner{display:flex;flex-direction:column;}
+.field input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:9px 12px;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',sans-serif;font-size:13px;transition:border-color .15s,box-shadow .15s;}
+.field input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);}
+.field input::placeholder{color:var(--text-muted);}
+.field.mono input{font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:12px;}
+.field-hint{font-size:10.5px;color:var(--text-muted);margin-top:4px;line-height:1.5;font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;}
+
+.autocomplete-drop{position:static;margin-top:6px;max-height:220px;overflow-y:auto;z-index:auto;background:var(--surface-raised);border:1px solid var(--border-light);border-radius:var(--r-sm);padding:5px;box-shadow:0 10px 28px rgba(0,0,0,0.4);display:none;}
+.autocomplete-drop.show{display:block;animation:ac-drop-in .16s ease;}
+@keyframes ac-drop-in{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
+.ac-item{padding:7px 8px;cursor:pointer;display:flex;align-items:center;gap:10px;border-radius:9px;transition:background .12s;margin-bottom:2px;animation:ac-item-in .16s ease both;}
+.ac-item:nth-child(1){animation-delay:0s;}.ac-item:nth-child(2){animation-delay:.015s;}.ac-item:nth-child(3){animation-delay:.03s;}.ac-item:nth-child(4){animation-delay:.045s;}.ac-item:nth-child(5){animation-delay:.06s;}.ac-item:nth-child(6){animation-delay:.075s;}
+@keyframes ac-item-in{from{opacity:0;transform:translateY(-3px);}to{opacity:1;transform:translateY(0);}}
+.ac-item:last-child{margin-bottom:0;}
+.ac-item:hover,.ac-item.active{background:var(--surface-hover);}
+.ac-avatar{width:26px;height:26px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',sans-serif;font-weight:700;font-size:.68rem;flex-shrink:0;}
+.ac-info{flex:1;min-width:0;}
+.ac-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ac-sub{font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10px;color:var(--text-dim);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ac-tags{display:flex;align-items:center;gap:5px;flex-shrink:0;}
+.ac-role{font-size:9px;padding:2px 6px;border-radius:2px;font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;text-transform:uppercase;letter-spacing:.05em;flex-shrink:0;}
+.rank-badge{font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:9.5px;padding:2px 7px;border-radius:2px;background:var(--rank-dim);color:var(--rank);white-space:nowrap;letter-spacing:.04em;flex-shrink:0;border:1px solid var(--rank-dim);}
+.rank-badge.sm{font-size:9px;padding:1px 5px;}
+.rank-badge.editable{cursor:default;}
+
+/* Personnel page */
+.personnel-page-list{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;}
+.personnel-card{background:var(--surface);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;display:flex;align-items:center;gap:13px;transition:border-color .2s,box-shadow .2s,transform .2s;animation:card-in .35s cubic-bezier(.22,.61,.36,1) both;position:relative;box-shadow:0 1px 2px rgba(0,0,0,0.3),0 6px 20px rgba(0,0,0,0.3);}
+.personnel-card:hover{border-color:var(--border-light);box-shadow:0 10px 28px rgba(0,0,0,0.45);transform:translateY(-1px);}
+.personnel-card .avatar{width:38px;height:38px;font-size:.85rem;background:var(--rank-dim);color:var(--rank);flex-shrink:0;border-radius:var(--r-sm);}
+.personnel-card-info{flex:1;min-width:0;cursor:pointer;}
+.personnel-card-name{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',sans-serif;font-size:1.02rem;font-weight:600;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .15s;}
+.personnel-card-info:hover .personnel-card-name{color:var(--accent);}
+.personnel-card-meta{font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10.5px;color:var(--text-dim);margin-top:3px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.personnel-card-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.personnel-empty{text-align:center;padding:56px 24px;border:1px dashed var(--border);border-radius:var(--r);color:var(--text-dim);}
+.personnel-empty i{font-size:32px;color:var(--text-muted);display:block;margin-bottom:12px;}
+.personnel-empty p{font-size:12px;font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;color:var(--text-muted);margin-top:4px;}
+
+.personnel-add-card{background:var(--surface);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid var(--border);border-radius:var(--r);padding:16px;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,0.3),0 6px 20px rgba(0,0,0,0.3);}
+.personnel-add-title{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);display:flex;align-items:center;gap:7px;margin-bottom:13px;}
+.personnel-form{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;}
+.personnel-form .field{margin-bottom:0;flex:1;min-width:140px;}
+.personnel-form button{flex-shrink:0;height:38px;}
+.modal-actions{display:flex;gap:8px;margin-top:18px;}
+.btn-secondary{flex:1;background:transparent;border:1px solid var(--border);color:var(--text-dim);border-radius:12px;padding:10px;cursor:pointer;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',sans-serif;font-weight:600;font-size:13.5px;letter-spacing:0;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn-secondary:disabled{cursor:wait;opacity:.85;}
+.btn-secondary.sent{border-color:var(--attendee);color:var(--attendee);background:var(--attendee-dim);}
+.btn-secondary#shareBtn:not(:disabled):hover{border-color:var(--cohost);color:var(--cohost);background:var(--cohost-dim);}
+.spin{animation:spin-icon .7s linear infinite;display:inline-block;}
+@keyframes spin-icon{from{transform:rotate(0);}to{transform:rotate(360deg);}}
+.btn-secondary:hover{color:var(--text);border-color:var(--border-light);}
+.btn-confirm{flex:1.4;border:none;border-radius:12px;padding:10px;cursor:pointer;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',sans-serif;font-weight:600;font-size:13.5px;letter-spacing:0;transition:filter .15s,transform .1s;}
+.btn-confirm:hover{filter:brightness(1.1);}
+.btn-confirm:active{transform:scale(.97);}
+.modal.wide{max-width:480px;}
+
+/* Profile modal */
+.profile-header{display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);}
+.profile-avatar-lg{width:54px;height:54px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',sans-serif;font-weight:700;font-size:1.3rem;flex-shrink:0;border:2px solid;}
+.profile-name{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',sans-serif;font-size:1.25rem;font-weight:700;letter-spacing:-0.015em;}
+.profile-id{font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10px;color:var(--text-muted);margin-top:3px;}
+.profile-role-badge{display:inline-flex;align-items:center;gap:4px;font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10px;padding:2px 8px;border-radius:2px;margin-top:5px;}
+.profile-stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
+.profile-stat{background:var(--surface-raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px;text-align:center;}
+.profile-stat-val{font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:18px;font-weight:600;color:var(--accent);}
+.profile-stat-lbl{font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-top:3px;}
+.profile-section-title{font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:8px;}
+.profile-meta-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.profile-meta-row:last-child{border-bottom:none;}
+.profile-meta-key{color:var(--text-dim);font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:11px;}
+.profile-meta-val{color:var(--text);font-weight:500;}
+
+/* Activity graph */
+.activity-graph{display:flex;align-items:flex-end;gap:3px;height:40px;margin-bottom:16px;}
+.activity-bar{flex:1;border-radius:2px 2px 0 0;min-width:8px;transition:height .5s cubic-bezier(.22,.61,.36,1),opacity .2s;cursor:default;position:relative;}
+.activity-bar:hover{opacity:.75;}
+.activity-bar-tooltip{position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:var(--surface-raised);border:1px solid var(--border-light);border-radius:3px;padding:3px 6px;font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:9px;color:var(--text);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;z-index:10;}
+.activity-bar:hover .activity-bar-tooltip{opacity:1;}
+.activity-week-labels{display:flex;gap:3px;margin-top:3px;}
+.activity-week-label{flex:1;font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:8px;color:var(--text-muted);text-align:center;overflow:hidden;}
+
+/* Attendance insight */
+.att-insight{background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;margin-top:4px;}
+.att-insight-head{font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;}
+.att-big{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',sans-serif;font-size:2.4rem;font-weight:700;color:var(--accent);line-height:1;}
+.att-sub{font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10px;color:var(--text-dim);margin-top:4px;}
+.att-breakdown-row{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap;}
+.att-bk-item{display:flex;align-items:center;gap:5px;font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10px;}
+.att-bk-dot{width:6px;height:6px;border-radius:1px;}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(18px) scale(.94);background:var(--surface-raised);border:1px solid var(--border-light);padding:10px 16px;border-radius:var(--r);font-size:12px;font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;letter-spacing:.04em;opacity:0;transition:opacity .22s ease,transform .35s cubic-bezier(.34,1.56,.64,1);pointer-events:none;z-index:500;display:flex;align-items:center;gap:10px;white-space:nowrap;border-left:2px solid var(--accent);}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}
+.toast-icon{animation:toast-icon-pop .4s cubic-bezier(.34,1.56,.64,1) .05s both;}
+@keyframes toast-icon-pop{from{transform:scale(0);}to{transform:scale(1);}}
+.toast.err{border-left-color:var(--danger);color:var(--danger);}
+.toast-undo{background:none;border:none;color:var(--accent);font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;padding:0;text-decoration:underline;}
+
+/* Admin panel */
+.admin-list{display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;margin-top:4px;}
+.admin-adj-row{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 9px;font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10.5px;}
+.admin-adj-row .aname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);}
+.admin-adj-row .adelta{color:var(--text-dim);white-space:nowrap;}
+.admin-adj-row .adelta span.h{color:var(--host);}
+.admin-adj-row .adelta span.c{color:var(--cohost);}
+.admin-adj-row .adelta span.a{color:var(--attendee);}
+.admin-badge{display:inline-flex;align-items:center;gap:5px;font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:9.5px;padding:3px 8px;border-radius:2px;background:var(--rank-dim);color:var(--rank);letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px;}
+.admin-delta-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.admin-delta-grid .field{margin-bottom:0;}
+
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;}}
+</style>
+</head>
+<body>
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+<defs>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></symbol>
+<symbol id="i-filter" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></symbol>
+<symbol id="i-filter-off" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/><line x1="2" y1="2" x2="22" y2="22"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></symbol>
+<symbol id="i-clipboard-copy" viewBox="0 0 24 24"><path d="M9 2h6a1 1 0 011 1v1H8V3a1 1 0 011-1z"/><rect x="6" y="4" width="12" height="18" rx="2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></symbol>
+<symbol id="i-pencil" viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 014 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+<symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
+<symbol id="i-flame" viewBox="0 0 24 24"><path d="M15.36 5.21A8.25 8.25 0 0112 21a8.25 8.25 0 01-5.96-13.95A8.28 8.28 0 009 9.6a9 9 0 013.36-6.87 8.2 8.2 0 003 2.48z"/><path d="M12 18a3.75 3.75 0 00.5-7.47 6 6 0 00-1.93 3.55 6 6 0 01-2.13-1A3.75 3.75 0 0012 18z"/></symbol>
+<symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
+<symbol id="i-calendar-plus" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="14" x2="12" y2="18"/><line x1="10" y1="16" x2="14" y2="16"/></symbol>
+<symbol id="i-chart-pie" viewBox="0 0 24 24"><path d="M21.21 15.89A10 10 0 118 2.83"/><path d="M22 12A10 10 0 0012 2v10z"/></symbol>
+<symbol id="i-medal" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6.5"/><polyline points="8.2 13.6 7 22 12 19 17 22 15.8 13.6"/></symbol>
+<symbol id="i-shield-off" viewBox="0 0 24 24"><path d="M12 21.5s7.5-3.7 7.5-9.5V5l-7.5-2.8L4.5 5v7c0 5.8 7.5 9.5 7.5 9.5z"/><line x1="3" y1="3" x2="21" y2="21"/></symbol>
+<symbol id="i-id-badge-2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M6 17c0-2 1.3-3 3-3s3 1 3 3"/><line x1="14" y1="8" x2="18" y2="8"/><line x1="14" y1="12" x2="18" y2="12"/></symbol>
+<symbol id="i-id-badge-2-off" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M6 17c0-2 1.3-3 3-3s3 1 3 3"/><line x1="14" y1="8" x2="18" y2="8"/><line x1="14" y1="12" x2="18" y2="12"/><line x1="2" y1="2" x2="22" y2="22"/></symbol>
+<symbol id="i-user-plus" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="17" y1="11" x2="23" y2="11"/></symbol>
+<symbol id="i-grip-vertical" viewBox="0 0 24 24"><circle cx="9" cy="5" r="1.2" fill="currentColor" stroke="none"/><circle cx="9" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="9" cy="19" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="5" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="19" r="1.2" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-loader-2" viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-6.22-8.56"/></symbol>
+<symbol id="i-brand-discord" viewBox="0 0 24 24"><path d="M8 5c-2 0-4 3-4 7s1 6 2 6c1 0 1.5-1 2-2 1.3.5 2.7.8 4 .8s2.7-.3 4-.8c.5 1 1 2 2 2 1 0 2-2 2-6s-2-7-4-7c-1 0-1.7.3-2.3.8a10 10 0 00-3.4 0C9.7 5.3 9 5 8 5z"/><circle cx="9" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-broadcast" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M8.5 8.5a5 5 0 000 7M15.5 8.5a5 5 0 010 7M5.5 5.5a9 9 0 000 13M18.5 5.5a9 9 0 010 13"/></symbol>
+<symbol id="i-alert-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></symbol>
+<symbol id="i-shield-lock" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><rect x="9" y="11" width="6" height="5" rx="1"/><path d="M10.5 11V9.5a1.5 1.5 0 013 0V11"/></symbol>
+<symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></symbol>
+</defs>
+</svg>
+<div class="wrap">
+  <header>
+    <div class="title-block">
+      <div class="logo" id="logoWrap">
+        <img src="https://cdn.discordapp.com/attachments/1193617535904530505/1530380675352494150/1fb9e07e-7f6c-49e7-b4e8-e810535bf663-removebg-preview.png?ex=6a655d92&is=6a640c12&hm=dc1a3e1dabd0291ab9583e2d7e944b391d5a7f9391d048855d9316e36cc13bab&" alt="JTTF logo" id="logoImg">
+        <svg class="logo-pulse" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="JTTF mark" id="logoFallback" style="display:none">
+          <circle cx="22" cy="22" r="20" fill="none" stroke="#48484a" stroke-width="1"/>
+          <circle cx="22" cy="22" r="15" fill="none" stroke="#0a84ff" stroke-width="1.3" opacity="0.6"/>
+          <path d="M22 8.5 L33.5 22 L22 35.5 L10.5 22 Z" fill="none" stroke="#0a84ff" stroke-width="1.6"/>
+          <path d="M22 8.5 V22 L33.5 22" stroke="#bf5af2" stroke-width="1.2" opacity="0.85" fill="none"/>
+          <circle cx="22" cy="22" r="3" fill="#0a84ff"/>
+        </svg>
+      </div>
+      <div>
+        <h1>JTTF Events</h1>
+        <div class="sub">
+          <span class="status-dot ok" id="statusDot"></span>
+          <span id="statusText">operational</span>
+          <span class="webhook-pill" id="webhookPill" title="No webhook configured.">
+            <svg class="icon" aria-hidden="true"><use href="#i-broadcast"></use></svg><span id="webhookPillText">webhook off</span>
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="search-wrap" id="searchWrap">
+        <svg class="icon search-icon" aria-hidden="true"><use href="#i-search"></use></svg>
+        <input type="text" id="globalSearch" placeholder="Search personnel..." autocomplete="off" aria-label="Search people">
+        <span class="search-kbd" id="searchKbd">/</span>
+        <div class="search-results" id="searchResults" role="listbox"></div>
+      </div>
+      <button class="ghost" id="webhookSettingsBtn"><svg class="icon" aria-hidden="true"><use href="#i-settings"></use></svg> Webhook</button>
+      <button class="primary" id="newEventBtn"><svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg> New Event</button>
+    </div>
+  </header>
+
+  <div class="view-tabs" id="viewTabs">
+    <button class="view-tab active" data-view="events" id="tabEvents"><svg class="icon" aria-hidden="true"><use href="#i-target"></use></svg> Events</button>
+    <button class="view-tab" data-view="personnel" id="tabPersonnel"><svg class="icon" aria-hidden="true"><use href="#i-id-badge-2"></use></svg> Personnel</button>
+  </div>
+
+  <div id="eventsView">
+  <div class="layout">
+    <div class="main-col">
+      <div class="toolbar">
+        <div class="filter-wrap">
+          <svg class="icon" aria-hidden="true"><use href="#i-filter"></use></svg>
+          <input type="text" id="eventFilter" placeholder="Filter events by name..." autocomplete="off">
+        </div>
+        <select class="sort-select" id="sortSelect" aria-label="Sort events">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="most">Most personnel</option>
+          <option value="least">Least personnel</option>
+          <option value="az">Name A&ndash;Z</option>
+        </select>
+        <span class="toolbar-count" id="toolbarCount"></span>
+      </div>
+      <div id="eventsContainer"></div>
+    </div>
+    <aside>
+      <div class="leaderboard">
+        <div class="lb-head">
+          <div class="lb-title"><svg class="icon" aria-hidden="true"><use href="#i-medal"></use></svg> Standings</div>
+          <button class="lb-export-btn" id="exportCsvBtn" title="Export standings as CSV"><svg class="icon" aria-hidden="true"><use href="#i-download"></use></svg></button>
+        </div>
+        <div class="lb-period-tabs" id="lbPeriodTabs">
+          <button class="lb-period-tab active" data-period="total">All time</button>
+          <button class="lb-period-tab" data-period="thisweek">This week</button>
+          <button class="lb-period-tab" data-period="lastweek">Last week</button>
+        </div>
+        <div class="lb-range" id="lbRange"></div>
+        <div class="lb-tabs" id="lbTabs">
+          <button class="lb-tab active" data-metric="total">Total</button>
+          <button class="lb-tab" data-metric="events">Events</button>
+          <button class="lb-tab" data-metric="hosting">Hosting</button>
+        </div>
+        <div class="lb-list" id="lbList"></div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:9.5px;color:var(--text-muted);line-height:1.8;letter-spacing:.05em">
+          H = host (3pt) &nbsp;&middot;&nbsp; C = co-host (2pt) &nbsp;&middot;&nbsp; A = attendee (1pt)<br>
+          <span style="color:var(--text-muted);font-size:9px">Click any name to view profile</span>
+        </div>
+        <div class="stats-row">
+          <div class="stat-chip"><div class="stat-chip-val" id="statEvents">0</div><div class="stat-chip-lbl">Events</div></div>
+          <div class="stat-chip"><div class="stat-chip-val" id="statPeople">0</div><div class="stat-chip-lbl">Participants</div></div>
+          <div class="stat-chip"><div class="stat-chip-val" id="statAvgAtt">&ndash;</div><div class="stat-chip-lbl">Avg. Size</div></div>
+          <div class="stat-chip"><div class="stat-chip-val" id="statTopHost">&ndash;</div><div class="stat-chip-lbl">Top Host</div></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+  </div>
+
+  <div id="personnelView" style="display:none">
+    <div class="toolbar">
+      <div class="filter-wrap">
+        <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
+        <input type="text" id="personnelSearch" placeholder="Search roster by name, ID, or rank..." autocomplete="off">
+      </div>
+      <select class="sort-select" id="personnelSortSelect" aria-label="Sort roster">
+        <option value="az">Name A&ndash;Z</option>
+        <option value="za">Name Z&ndash;A</option>
+        <option value="rank">Rank</option>
+        <option value="events">Most events</option>
+        <option value="recent">Recently added</option>
+      </select>
+      <span class="toolbar-count" id="personnelToolbarCount"></span>
+    </div>
+    <div class="personnel-page-list" id="personnelPageList"></div>
+    <div class="personnel-add-card" id="personnelAddCard">
+      <div class="personnel-add-title"><svg class="icon" aria-hidden="true"><use href="#i-user-plus"></use></svg> Add to roster</div>
+      <div class="personnel-form">
+        <div class="field"><label for="newPName">Username</label><input id="newPName" type="text" placeholder="e.g. nova.exe"></div>
+        <div class="field mono"><label for="newPId">Discord ID</label><input id="newPId" type="text" placeholder="optional"></div>
+        <div class="field"><label for="newPRank">Rank</label><input id="newPRank" type="text" placeholder="e.g. Sergeant"></div>
+        <button class="btn-confirm" id="addPersonnelBtn" style="background:var(--accent);color:#fff;flex:0 0 auto;padding:9px 18px"><svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg> Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay"><div class="modal" id="modalBox"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const BIN_ID='6a3d2bacda38895dfefd5e8e';
+const API_KEY='$2a$10$9dKNzVl1cUjZzcndX/LDp.kK8zdWOWnDTklDrWJTGZ0vGN7Jjdy6K';
+const BASE=`https://api.jsonbin.io/v3/b/${BIN_ID}`;
+const DEFAULT_LOG_WEBHOOK='https://discord.com/api/webhooks/1530968288346243275/yieo-SryJbsjR-xYDfbRVDa6w4Oi5_WCaFakQcj3XPyXWAJuk5u1AwFZ19QpPEkHQF39';
+const DEFAULT_EVENT_WEBHOOK='https://discord.com/api/webhooks/1530968508425306293/ZijwtqhkQlzxGvgpc_raKnOyn74iylZBuVo30D12570FNAnt76vPA91a2tnTbLsDgg9u';
+let state={events:[],personnel:[],webhookUrl:DEFAULT_LOG_WEBHOOK,eventWebhookUrl:DEFAULT_EVENT_WEBHOOK,adjustments:[]};
+let eventFilterQuery='';
+let eventSort='newest';
+
+const g=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const initials=n=>n?n.trim().slice(0,2).toUpperCase():'??';
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const todayStr=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
+
+function setStatus(s){
+  const dot=g('statusDot');dot.className='status-dot';
+  if(s==='ok')dot.classList.add('ok');
+  else if(s==='err')dot.classList.add('err');
+  else if(s==='saving')dot.classList.add('saving');
+}
+function pingStatus(){
+  const dot=g('statusDot');if(!dot)return;
+  dot.classList.remove('ping');
+  void dot.offsetWidth;
+  dot.classList.add('ping');
+}
+
+const _countState=new WeakMap();
+function animateCount(el,target,opts={}){
+  if(!el)return;
+  const {suffix='',duration=550,fallback='&ndash;'}=opts;
+  if(target===null||target===undefined||isNaN(target)){el.textContent=fallback;return;}
+  const prev=_countState.get(el);
+  if(prev===target){el.textContent=target+suffix;return;}
+  _countState.set(el,target);
+  const start=(prev===undefined?0:prev);
+  const startTime=performance.now();
+  if(el._countRAF)cancelAnimationFrame(el._countRAF);
+  function frame(now){
+    const t=Math.min(1,(now-startTime)/duration);
+    const eased=1-Math.pow(1-t,3);
+    const val=Math.round(start+(target-start)*eased);
+    el.textContent=val+suffix;
+    if(t<1)el._countRAF=requestAnimationFrame(frame);
+  }
+  el._countRAF=requestAnimationFrame(frame);
+}
+
+function showToast(msg,isErr,undoFn){
+  const t=g('toast');
+  t.innerHTML=(isErr?'<svg class="icon toast-icon"><use href="#i-alert-circle"></use></svg>':'<svg class="icon toast-icon"><use href="#i-check"></use></svg>')+esc(msg);
+  if(undoFn){
+    const btn=document.createElement('button');
+    btn.className='toast-undo';btn.textContent='Undo';
+    btn.onclick=()=>{undoFn();t.classList.remove('show');};
+    t.appendChild(btn);
+  }
+  t.className='toast show'+(isErr?' err':'');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),undoFn?5000:2800);
+}
+
+/* Date helpers */
+function parseEventDate(ev){
+  if(ev.date){const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(ev.date.trim());if(m)return new Date(+m[1],+m[2]-1,+m[3]);const d=new Date(ev.date);if(!isNaN(d))return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
+  if(ev.createdAt){const d=new Date(ev.createdAt);if(!isNaN(d))return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
+  return null;
+}
+function weekBounds(ref){const d=ref?new Date(ref):new Date();d.setHours(0,0,0,0);const dow=d.getDay();const diff=(dow===0?-6:1-dow);const mon=new Date(d);mon.setDate(d.getDate()+diff);const sun=new Date(mon);sun.setDate(mon.getDate()+6);return{start:mon,end:sun};}
+function fmtShort(d){return d.toLocaleDateString(undefined,{month:'short',day:'numeric'});}
+function inRange(d,s,e){return d>=s&&d<=e;}
+
+/* People helpers */
+function allPeople(){
+  const out=[];
+  for(const ev of state.events)for(const role of['host','cohost','attendee'])for(const p of(ev[role]||[]))out.push({...p,role,eventName:ev.name,eventId:ev.id,eventDate:ev.date||ev.createdAt});
+  return out;
+}
+
+/* Personnel roster */
+function personnelKey(p){return(p.discordId||p.username||'').toLowerCase()||p.id;}
+function findPersonnel(key){return state.personnel.find(p=>personnelKey(p)===key);}
+function rankFor(key){const rec=findPersonnel(key);return rec?.rank||'';}
+function allPersonnelAsPeople(){
+  return state.personnel.map(p=>({...p,role:'attendee',eventName:'',eventId:'',eventDate:'',_fromRoster:true}));
+}
+function combinedPeoplePool(){
+  const seen=new Set();const out=[];
+  for(const p of allPeople()){const k=personKey(p);if(seen.has(k))continue;seen.add(k);out.push(p);}
+  for(const p of allPersonnelAsPeople()){const k=personnelKey(p);if(seen.has(k))continue;seen.add(k);out.push(p);}
+  return out;
+}
+
+/* Manual admin adjustments — always all-time, never counted in weekly periods */
+function adjustmentsFor(key){
+  return state.adjustments.filter(a=>a.key===key);
+}
+function adjustmentTotals(key){
+  const list=adjustmentsFor(key);
+  return list.reduce((acc,a)=>{acc.host+=a.host||0;acc.cohost+=a.cohost||0;acc.attendee+=a.attendee||0;return acc;},{host:0,cohost:0,attendee:0});
+}
+function applyAdjustmentsToMap(map){
+  for(const adj of state.adjustments){
+    const key=adj.key;
+    if(!map.has(key))map.set(key,{username:adj.username,discordId:adj.discordId,key,host:0,cohost:0,attendee:0,events:new Set()});
+    const entry=map.get(key);
+    entry.host+=adj.host||0;entry.cohost+=adj.cohost||0;entry.attendee+=adj.attendee||0;
+    if(!entry.username&&adj.username)entry.username=adj.username;
+    if(!entry.discordId&&adj.discordId)entry.discordId=adj.discordId;
+  }
+}
+
+function buildProfile(key){
+  const profile={username:'',discordId:'',rank:'',host:0,cohost:0,attendee:0,eventSet:new Set(),eventDetails:[],lastActive:null};
+  const roster=findPersonnel(key);
+  if(roster){profile.username=roster.username||'';profile.discordId=roster.discordId||'';profile.rank=roster.rank||'';}
+  for(const ev of state.events){
+    for(const role of['host','cohost','attendee']){
+      for(const p of(ev[role]||[])){
+        const k=(p.discordId||p.username||'').toLowerCase()||p.id;
+        if(k!==key)continue;
+        if(!profile.username&&p.username)profile.username=p.username;
+        if(!profile.discordId&&p.discordId)profile.discordId=p.discordId;
+        profile[role]++;
+        profile.eventSet.add(ev.id);
+        profile.eventDetails.push({evId:ev.id,evName:ev.name,role,date:ev.date||ev.createdAt});
+        const d=parseEventDate(ev);
+        if(d&&(!profile.lastActive||d>profile.lastActive))profile.lastActive=d;
+      }
+    }
+  }
+  /* fold in manual admin adjustments — all-time only, doesn't touch eventCount */
+  const adj=adjustmentTotals(key);
+  profile.host+=adj.host;profile.cohost+=adj.cohost;profile.attendee+=adj.attendee;
+  if(!profile.username){const rec=state.adjustments.find(a=>a.key===key);if(rec)profile.username=rec.username||profile.username;}
+  if(!profile.discordId){const rec=state.adjustments.find(a=>a.key===key);if(rec)profile.discordId=rec.discordId||profile.discordId;}
+  profile.eventCount=profile.eventSet.size;
+  profile.total=profile.host*3+profile.cohost*2+profile.attendee;
+  profile.hosting=profile.host+profile.cohost;
+  return profile;
+}
+
+function personKey(p){return(p.discordId||p.username||'').toLowerCase()||p.id;}
+
+function personStreak(key){
+  const sorted=[...state.events].sort((a,b)=>{const da=parseEventDate(a),db=parseEventDate(b);if(!da||!db)return 0;return da-db;});
+  let streak=0,best=0;
+  for(const ev of sorted){
+    let found=false;
+    for(const role of['host','cohost','attendee']){if(found)break;for(const p of(ev[role]||[])){if(personKey(p)===key){found=true;break;}}}
+    if(found){streak++;best=Math.max(best,streak);}else streak=0;
+  }
+  return best;
+}
+
+function activityGraphData(key){
+  const now=new Date();now.setHours(0,0,0,0);
+  const weeks=[];
+  for(let w=7;w>=0;w--){
+    const wEnd=new Date(now);wEnd.setDate(now.getDate()-w*7);
+    const wStart=new Date(wEnd);wStart.setDate(wEnd.getDate()-6);
+    let pts=0;
+    for(const ev of state.events){
+      const d=parseEventDate(ev);if(!d||!inRange(d,wStart,wEnd))continue;
+      for(const role of['host','cohost','attendee']){
+        for(const p of(ev[role]||[])){
+          if(personKey(p)===key){pts+=role==='host'?3:role==='cohost'?2:1;break;}
+        }
+      }
+    }
+    weeks.push({pts,label:fmtShort(wStart)});
+  }
+  return weeks;
+}
+
+/* Fuzzy search */
+function fuzzyScore(str,q){str=str.toLowerCase();q=q.toLowerCase();if(str===q)return 100;if(str.startsWith(q))return 80;if(str.includes(q))return 60;let si=0,qi=0,sc=0;while(si<str.length&&qi<q.length){if(str[si]===q[qi]){sc++;qi++;}si++;}return qi===q.length?sc:0;}
+function searchPeople(q){
+  if(!q)return[];
+  const people=combinedPeoplePool(),results=[];
+  for(const p of people){const ns=fuzzyScore(p.username||'',q);const is=p.discordId?fuzzyScore(p.discordId,q):0;const best=Math.max(ns,is);if(best>0)results.push({...p,_score:best});}
+  results.sort((a,b)=>b._score-a._score);
+  const seen=new Set();
+  return results.filter(r=>{const k=personKey(r);if(seen.has(k))return false;seen.add(k);return true;}).slice(0,8);
+}
+
+const searchInput=g('globalSearch'),searchResults=g('searchResults');let searchActive=-1;
+function renderSearchResults(q){
+  const results=searchPeople(q);
+  if(!results.length){searchResults.innerHTML=`<div class="sr-empty">No results for "${esc(q)}"</div>`;searchResults.classList.add('show');return;}
+  const roleColors={host:'var(--host)',cohost:'var(--cohost)',attendee:'var(--attendee)'};
+  searchResults.innerHTML=results.map((r,i)=>{
+    const key=personKey(r);const rank=rankFor(key);
+    const metaParts=[r.discordId?esc(r.discordId):'no ID'];
+    metaParts.push(r._fromRoster?'roster only':esc(r.eventName));
+    return `
+    <div class="sr-item" role="option" data-idx="${i}" data-evid="${r.eventId||''}" data-pkey="${esc(key)}">
+      <div class="sr-avatar" style="background:${roleColors[r.role]}18;color:${roleColors[r.role]}">${esc(initials(r.username))}</div>
+      <div class="sr-info"><div class="sr-name">${esc(r.username||'Unknown')}</div><div class="sr-meta">${metaParts.join(' &middot; ')}</div></div>
+      ${rank?`<span class="rank-badge sm">${esc(rank)}</span>`:''}
+      ${r._fromRoster?'':`<span class="sr-badge ${r.role}">${r.role}</span>`}
+    </div>`;
+  }).join('');
+  searchResults.classList.add('show');searchActive=-1;
+}
+searchInput.addEventListener('input',()=>{const q=searchInput.value.trim();if(!q){searchResults.classList.remove('show');return;}renderSearchResults(q);});
+searchInput.addEventListener('keydown',e=>{
+  const items=[...searchResults.querySelectorAll('.sr-item')];
+  if(e.key==='ArrowDown'){e.preventDefault();searchActive=Math.min(searchActive+1,items.length-1);items.forEach((it,i)=>it.classList.toggle('active',i===searchActive));}
+  else if(e.key==='ArrowUp'){e.preventDefault();searchActive=Math.max(searchActive-1,0);items.forEach((it,i)=>it.classList.toggle('active',i===searchActive));}
+  else if(e.key==='Escape'){searchResults.classList.remove('show');searchInput.value='';searchInput.blur();}
+  else if(e.key==='Enter'&&searchActive>=0&&items[searchActive]){items[searchActive].click();}
+});
+searchResults.addEventListener('click',e=>{
+  const item=e.target.closest('.sr-item');if(!item)return;
+  const pkey=item.dataset.pkey;
+  searchResults.classList.remove('show');searchInput.value='';
+  if(pkey)openProfileModal(pkey);
+});
+document.addEventListener('click',e=>{if(!g('searchWrap').contains(e.target))searchResults.classList.remove('show');});
+
+document.addEventListener('keydown',e=>{
+  const tag=(e.target.tagName||'').toLowerCase();
+  const typing=tag==='input'||tag==='textarea'||e.target.isContentEditable;
+  if(typing)return;
+  if(e.key==='/'){e.preventDefault();searchInput.focus();}
+  else if(e.key==='n'){e.preventDefault();if(!g('overlay').classList.contains('show'))openNewEventModal();}
+});
+
+/* Secret admin panel — type "admin" anywhere (not while typing in a field) to open it */
+(function(){
+  let buffer='';
+  const CODE='admin';
+  document.addEventListener('keydown',e=>{
+    const tag=(e.target.tagName||'').toLowerCase();
+    const typing=tag==='input'||tag==='textarea'||e.target.isContentEditable;
+    if(typing)return;
+    if(e.key.length!==1)return;
+    buffer=(buffer+e.key.toLowerCase()).slice(-CODE.length);
+    if(buffer===CODE){
+      buffer='';
+      if(!g('overlay').classList.contains('show'))openAdminPanel();
+    }
+  });
+})();
+
+/* Persistence */
+async function loadEvents(){
+  setStatus('saving');g('statusText').textContent='syncing...';
+  try{
+    const r=await fetch(`${BASE}/latest`,{headers:{'X-Master-Key':API_KEY}});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const d=await r.json();const rec=d.record;
+    state.events=Array.isArray(rec)?rec:Array.isArray(rec?.events)?rec.events:[];
+    state.personnel=Array.isArray(rec?.personnel)?rec.personnel:[];
+    state.webhookUrl=(typeof rec?.webhookUrl==='string'&&rec.webhookUrl)?rec.webhookUrl:DEFAULT_LOG_WEBHOOK;
+    state.eventWebhookUrl=(typeof rec?.eventWebhookUrl==='string'&&rec.eventWebhookUrl)?rec.eventWebhookUrl:DEFAULT_EVENT_WEBHOOK;
+    state.adjustments=Array.isArray(rec?.adjustments)?rec.adjustments:[];
+    g('statusText').textContent='operational';setStatus('ok');render();
+  }catch(e){
+    console.error(e);g('statusText').textContent='offline';setStatus('err');
+    showToast('Could not reach database.',true);render();
+  }
+}
+async function saveEvents(){
+  setStatus('saving');g('statusText').textContent='saving...';
+  try{
+    const r=await fetch(BASE,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':API_KEY},body:JSON.stringify({events:state.events,personnel:state.personnel,webhookUrl:state.webhookUrl,eventWebhookUrl:state.eventWebhookUrl,adjustments:state.adjustments})});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    g('statusText').textContent='operational';setStatus('ok');pingStatus();
+  }catch(e){
+    console.error(e);g('statusText').textContent='save failed';setStatus('err');
+    showToast('Could not save &mdash; try again.',true);
+  }
+}
+function persist(){render();saveEvents();}
+
+/* Webhook */
+const EMBED_COLORS={create:0xff9f0a,delete:0xff453a,add:0x5e5ce6,remove:0x30d158,edit:0xff9f0a,move:0x5e5ce6};
+function plainText(html){return html.replace(/<[^>]+>/g,'');}
+async function sendWebhook(type,text){
+  if(!state.webhookUrl)return;
+  const plain=plainText(text);
+  const typeLabels={create:'Event Created',delete:'Event Deleted',add:'Member Added',remove:'Member Removed',edit:'Event Edited',move:'Member Moved'};
+  const payload={
+    embeds:[{
+      title:typeLabels[type]||'JTTF Update',
+      description:plain,
+      color:EMBED_COLORS[type]||0xff9f0a,
+      footer:{text:'JTTF Events'},
+      timestamp:new Date().toISOString()
+    }]
+  };
+  try{await fetch(state.webhookUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});}
+  catch(e){console.error('Webhook failed',e);}
+}
+
+async function sendProfileToWebhook(key){
+  if(!state.webhookUrl){showToast('No webhook configured.',true);return false;}
+  const prof=buildProfile(key);
+  const name=prof.username||prof.discordId||'Unknown';
+  const totalEvents=state.events.length;
+  const pct=totalEvents?Math.round((prof.eventCount/totalEvents)*100):0;
+  const lastRole=prof.eventDetails[prof.eventDetails.length-1]?.role||'attendee';
+  const roleColors={host:0xff9f0a,cohost:0x5e5ce6,attendee:0x30d158};
+  const placement=overallPlacement(key);
+  const placementEmoji=placement===1?'\uD83E\uDD47':placement===2?'\uD83E\uDD48':placement===3?'\uD83E\uDD49':'\uD83D\uDCCB';
+  const streak=personStreak(key);
+  const lastActive=prof.lastActive?prof.lastActive.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}):'&mdash;';
+  const recent=[...prof.eventDetails].reverse().slice(0,5);
+  const recentLines=recent.length
+    ? recent.map(ev=>`\u2022 **${plainText(ev.evName)}** \u2014 ${roleCfg[ev.role]?.label||ev.role}`).join('\n')
+    : '_No events yet_';
+  const fields=[
+    {name:'Total Score',value:`\`${prof.total}\` pts`,inline:true},
+    {name:'Events',value:`\`${prof.eventCount}\` / ${totalEvents}`,inline:true},
+    {name:'Attendance',value:`\`${pct}%\``,inline:true},
+  ];
+  if(placement)fields.push({name:'Standing',value:`#${placement} overall`,inline:true});
+  if(prof.rank)fields.push({name:'Rank',value:prof.rank,inline:true});
+  fields.push(
+    {name:'Host',value:`\`${prof.host}\``,inline:true},
+    {name:'Co-Host',value:`\`${prof.cohost}\``,inline:true},
+    {name:'Attendee',value:`\`${prof.attendee}\``,inline:true},
+  );
+  if(streak>=2)fields.push({name:'\uD83D\uDD25 Best Streak',value:`${streak} events in a row`,inline:true});
+  fields.push({name:'Last Active',value:lastActive,inline:true});
+  fields.push({name:'Recent Events',value:recentLines,inline:false});
+  const payload={
+    embeds:[{
+      author:{name:'JTTF \u00B7 PERSONNEL FILE'},
+      title:`${placementEmoji}  ${name}`,
+      description:prof.discordId?`Discord ID: \`${prof.discordId}\``:undefined,
+      color:roleColors[lastRole]||0xff9f0a,
+      fields,
+      footer:{text:`Shared from JTTF Events`},
+      timestamp:new Date().toISOString()
+    }]
+  };
+  try{
+    const r=await fetch(state.webhookUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    return true;
+  }catch(e){console.error('Profile webhook failed',e);return false;}
+}
+
+function updateWebhookPill(){
+  const pill=g('webhookPill'),text=g('webhookPillText');
+  if(state.webhookUrl){pill.classList.add('live');text.textContent='webhook live';pill.title=`Posting embeds to: ${state.webhookUrl}`;}
+  else{pill.classList.remove('live');text.textContent='webhook off';pill.title='No webhook configured.';}
+}
+
+/* Modal helpers */
+function closeModal(){g('overlay').classList.remove('show');g('modalBox').innerHTML='';g('modalBox').classList.remove('wide');}
+function openModal(html,cb){g('modalBox').innerHTML=html;g('overlay').classList.add('show');if(cb)cb();setTimeout(()=>{const f=g('modalBox').querySelector('input');if(f)f.focus();},60);}
+g('overlay').addEventListener('click',e=>{if(e.target===g('overlay'))closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+/* Webhook settings */
+function openWebhookSettingsModal(){
+  openModal(`
+    <h3><svg class="icon" style="color:var(--accent)" aria-hidden="true"><use href="#i-broadcast"></use></svg> Webhook Settings</h3>
+    <div class="field"><label for="whUrl">Activity log webhook</label>
+      <input id="whUrl" type="text" placeholder="https://discord.com/api/webhooks/..." value="${esc(state.webhookUrl)}">
+      <div class="field-hint">Sends rich Discord embeds on every create / delete / add / remove / edit action. Leave blank to disable.</div>
+    </div>
+    <div class="field"><label for="evWhUrl">Event announcement webhook</label>
+      <input id="evWhUrl" type="text" placeholder="https://discord.com/api/webhooks/..." value="${esc(state.eventWebhookUrl)}">
+      <div class="field-hint">Separate webhook used by the per-event "Send" button to post an event roster with an image to a different channel. Leave blank to disable.</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="cancelBtn">Cancel</button>
+      <button class="btn-confirm" id="confirmBtn" style="background:var(--accent);color:#fff">Save</button>
+    </div>`,()=>{
+    g('cancelBtn').onclick=closeModal;
+    g('confirmBtn').onclick=()=>{
+      state.webhookUrl=g('whUrl').value.trim();
+      state.eventWebhookUrl=g('evWhUrl').value.trim();
+      updateWebhookPill();closeModal();saveEvents();showToast('Webhook settings saved.');
+    };
+    g('evWhUrl').addEventListener('keydown',e=>{if(e.key==='Enter')g('confirmBtn').click();});
+  });
+}
+g('webhookSettingsBtn').addEventListener('click',openWebhookSettingsModal);
+
+/* Send event to the separate event-announcement webhook, with an image */
+async function sendEventToWebhook(eventId,imageUrl){
+  if(!state.eventWebhookUrl)return false;
+  const ev=state.events.find(e=>e.id===eventId);if(!ev)return false;
+  const h=ev.host||[],c=ev.cohost||[],a=ev.attendee||[];
+  const rosterLine=(arr)=>arr.length?arr.map(p=>{
+    const mention=p.discordId?`<@${p.discordId}>`:(p.username||'?');
+    const rank=rankFor(personKey(p));
+    return rank?`${mention} \`${rank}\``:mention;
+  }).join(', '):'_none_';
+  const embed={
+    title:ev.name,
+    description:ev.date?`Date: \`${ev.date}\``:undefined,
+    color:0x0a84ff,
+    fields,
+    footer:{text:'JTTF Events'},
+    timestamp:new Date().toISOString()
+  };
+  if(imageUrl)embed.image={url:imageUrl};
+  const payload={embeds:[embed]};
+  try{
+    const r=await fetch(state.eventWebhookUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    return true;
+  }catch(e){console.error('Event webhook failed',e);return false;}
+}
+
+function openSendEventModal(eventId){
+  const ev=state.events.find(e=>e.id===eventId);if(!ev)return;
+  if(!state.eventWebhookUrl){
+    openModal(`
+      <h3 style="color:var(--danger)"><svg class="icon" aria-hidden="true"><use href="#i-alert-circle"></use></svg> No Webhook Set</h3>
+      <p style="color:var(--text-dim);font-size:12px;line-height:1.6;font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace">Add an "Event announcement webhook" first in the Webhook settings panel.</p>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="cancelBtn">Close</button>
+        <button class="btn-confirm" id="confirmBtn" style="background:var(--accent);color:#fff">Open Webhook Settings</button>
+      </div>`,()=>{
+      g('cancelBtn').onclick=closeModal;
+      g('confirmBtn').onclick=()=>{closeModal();openWebhookSettingsModal();};
+    });
+    return;
+  }
+  openModal(`
+    <h3><span class="role-dot" style="background:var(--accent)"></span>Send &ldquo;${esc(ev.name)}&rdquo;</h3>
+    <div class="field"><label for="evImgUrl">Image URL</label>
+      <input id="evImgUrl" type="text" placeholder="https://.../image.png">
+      <div class="field-hint">Posts this event's roster to the event announcement webhook, with the image attached. Leave blank to send without an image.</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="cancelBtn">Cancel</button>
+      <button class="btn-confirm" id="confirmBtn" style="background:var(--accent);color:#fff">Send</button>
+    </div>`,()=>{
+    g('cancelBtn').onclick=closeModal;
+    g('confirmBtn').onclick=async()=>{
+      const imgUrl=g('evImgUrl').value.trim();
+      const btn=g('confirmBtn');
+      btn.disabled=true;const origHtml=btn.innerHTML;btn.innerHTML='<svg class="icon spin" aria-hidden="true"><use href="#i-loader-2"></use></svg> Sending...';
+      const ok=await sendEventToWebhook(eventId,imgUrl);
+      if(ok){closeModal();showToast(`"${ev.name}" sent to webhook.`);}
+      else{btn.disabled=false;btn.innerHTML=origHtml;showToast('Could not send to webhook.',true);}
+    };
+    g('evImgUrl').addEventListener('keydown',e=>{if(e.key==='Enter')g('confirmBtn').click();});
+  });
+}
+window.openSendEventModal=openSendEventModal;
+
+/* Secret admin panel — manual all-time host/cohost/attendee point adjustments */
+function adminAdjRowHtml(adj){
+  const parts=[];
+  if(adj.host)parts.push(`<span class="h">${adj.host>0?'+':''}${adj.host}H</span>`);
+  if(adj.cohost)parts.push(`<span class="c">${adj.cohost>0?'+':''}${adj.cohost}C</span>`);
+  if(adj.attendee)parts.push(`<span class="a">${adj.attendee>0?'+':''}${adj.attendee}A</span>`);
+  return `<div class="admin-adj-row" data-aid="${adj.id}">
+    <span class="aname">${esc(adj.username||adj.discordId||'Unknown')}${adj.note?` <span style="color:var(--text-muted)">&middot; ${esc(adj.note)}</span>`:''}</span>
+    <span class="adelta">${parts.join(' ')||'&ndash;'}</span>
+    <button class="remove-x" title="Remove adjustment" data-act="del-adj" data-aid="${adj.id}"><svg class="icon" aria-hidden="true" style="font-size:11px"><use href="#i-x"></use></svg></button>
+  </div>`;
+}
+function renderAdminAdjList(){
+  const list=g('adminAdjList');if(!list)return;
+  if(!state.adjustments.length){list.innerHTML=`<div style="text-align:center;padding:14px;color:var(--text-muted);font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10.5px">No manual adjustments yet.</div>`;return;}
+  list.innerHTML=[...state.adjustments].reverse().map(adminAdjRowHtml).join('');
+}
+function openAdminPanel(){
+  const existingPeople=combinedPeoplePool();
+  openModal(`
+    <span class="admin-badge"><svg class="icon" aria-hidden="true"><use href="#i-shield-lock"></use></svg> Admin &middot; Manual Points</span>
+    <h3 style="margin-bottom:6px"><svg class="icon" style="color:var(--rank)" aria-hidden="true"><use href="#i-shield-lock"></use></svg> Adjust Personnel</h3>
+    <div class="field-hint" style="margin-bottom:14px">Adds custom host / co-host / attendee credit to a person, counted toward All-Time standings only &mdash; never This Week or Last Week.</div>
+    <div class="field"><label for="adminPName">Person</label>
+      <div class="field-inner"><input id="adminPName" type="text" placeholder="Search by username or ID" autocomplete="off"><div class="autocomplete-drop" id="adminAcDrop"></div></div>
+    </div>
+    <div class="field mono"><label for="adminPId">Discord ID (optional)</label><input id="adminPId" type="text" placeholder="e.g. 482910374659028992"></div>
+    <div class="field"><label>Add points</label>
+      <div class="admin-delta-grid">
+        <div class="field mono"><input id="adminHost" type="number" placeholder="Host" value="0"></div>
+        <div class="field mono"><input id="adminCohost" type="number" placeholder="Co-Host" value="0"></div>
+        <div class="field mono"><input id="adminAttendee" type="number" placeholder="Attendee" value="0"></div>
+      </div>
+      <div class="field-hint">Negative numbers subtract. Each field applies independently.</div>
+    </div>
+    <div class="field"><label for="adminNote">Note (optional)</label><input id="adminNote" type="text" placeholder="e.g. bonus for covering a shift"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="cancelBtn">Close</button>
+      <button class="btn-confirm" id="confirmBtn" style="background:var(--rank);color:#fff">Apply</button>
+    </div>
+    <div class="profile-section-title" style="margin-top:18px">Existing adjustments</div>
+    <div class="admin-list" id="adminAdjList"></div>`,()=>{
+    g('modalBox').classList.add('wide');
+    g('cancelBtn').onclick=closeModal;
+    renderAdminAdjList();
+    const pName=g('adminPName'),pId=g('adminPId'),drop=g('adminAcDrop');let acIdx=-1;
+    function selectAcItem(p){pName.value=p.username||'';pId.value=p.discordId||'';drop.classList.remove('show');acIdx=-1;}
+    pName.addEventListener('input',()=>{
+      const q=pName.value.trim();if(!q){drop.classList.remove('show');return;}
+      const seen=new Set();
+      const matches=existingPeople.filter(p=>{
+        const k=personKey(p);if(!p.username||seen.has(k))return false;seen.add(k);
+        return p.username.toLowerCase().includes(q.toLowerCase());
+      }).slice(0,6);
+      if(!matches.length){drop.classList.remove('show');return;}
+      const rc={host:'var(--host)',cohost:'var(--cohost)',attendee:'var(--attendee)'};
+      drop.innerHTML=matches.map((p,i)=>{
+        const rank=rankFor(personKey(p));
+        return `<div class="ac-item" data-idx="${i}"><div class="ac-avatar" style="background:${rc[p.role]}22;color:${rc[p.role]}">${esc(initials(p.username))}</div><div class="ac-info"><div class="ac-name">${esc(p.username)}</div><div class="ac-sub">${p.discordId?esc(p.discordId):'no ID'}</div></div>${rank?`<span class="rank-badge sm">${esc(rank)}</span>`:''}</div>`;
+      }).join('');
+      drop._matches=matches;drop.classList.add('show');acIdx=-1;
+    });
+    pName.addEventListener('keydown',e=>{
+      const items=[...drop.querySelectorAll('.ac-item')];if(!items.length)return;
+      if(e.key==='ArrowDown'){e.preventDefault();acIdx=Math.min(acIdx+1,items.length-1);items.forEach((it,i)=>it.classList.toggle('active',i===acIdx));}
+      else if(e.key==='ArrowUp'){e.preventDefault();acIdx=Math.max(acIdx-1,0);items.forEach((it,i)=>it.classList.toggle('active',i===acIdx));}
+      else if(e.key==='Enter'&&acIdx>=0){e.preventDefault();selectAcItem(drop._matches[acIdx]);}
+      else if(e.key==='Escape'){drop.classList.remove('show');}
+    });
+    drop.addEventListener('click',e=>{const item=e.target.closest('.ac-item');if(!item)return;selectAcItem(drop._matches[+item.dataset.idx]);});
+
+    g('confirmBtn').onclick=()=>{
+      const username=pName.value.trim(),discordId=pId.value.trim();
+      const host=parseInt(g('adminHost').value,10)||0;
+      const cohost=parseInt(g('adminCohost').value,10)||0;
+      const attendee=parseInt(g('adminAttendee').value,10)||0;
+      const note=g('adminNote').value.trim();
+      if(!username&&!discordId){showToast('Add a username or ID first.',true);return;}
+      if(!host&&!cohost&&!attendee){showToast('Enter at least one non-zero amount.',true);return;}
+      const key=(discordId||username).toLowerCase();
+      state.adjustments.push({id:uid(),key,username,discordId,host,cohost,attendee,note,createdAt:new Date().toISOString()});
+      saveEvents();render();renderAdminAdjList();
+      showToast(`Applied ${[host&&`${host>0?'+':''}${host}H`,cohost&&`${cohost>0?'+':''}${cohost}C`,attendee&&`${attendee>0?'+':''}${attendee}A`].filter(Boolean).join(' ')} to ${username||discordId} (all-time)`);
+      g('adminHost').value='0';g('adminCohost').value='0';g('adminAttendee').value='0';g('adminNote').value='';
+    };
+    g('adminAdjList').addEventListener('click',e=>{
+      const btn=e.target.closest('[data-act="del-adj"]');if(!btn)return;
+      const idx=state.adjustments.findIndex(a=>a.id===btn.dataset.aid);if(idx===-1)return;
+      const removed=state.adjustments[idx];
+      state.adjustments.splice(idx,1);saveEvents();render();renderAdminAdjList();
+      showToast('Adjustment removed',false,()=>{state.adjustments.splice(idx,0,removed);saveEvents();render();renderAdminAdjList();});
+    });
+  });
+}
+
+/* View tabs */
+let activeView='events';
+function switchView(view){
+  activeView=view;
+  g('eventsView').style.display=view==='events'?'':'none';
+  g('personnelView').style.display=view==='personnel'?'':'none';
+  [...g('viewTabs').children].forEach(t=>t.classList.toggle('active',t.dataset.view===view));
+  if(view==='personnel')renderPersonnelPage();
+}
+g('viewTabs').addEventListener('click',e=>{const btn=e.target.closest('.view-tab');if(!btn)return;switchView(btn.dataset.view);});
+
+/* Personnel roster */
+let personnelQuery='',personnelSort='az';
+function personnelCardHtml(p){
+  const key=personnelKey(p);
+  const evCount=buildProfile(key).eventCount;
+  return `<div class="personnel-card" data-pkey="${esc(key)}">
+    <div class="avatar">${esc(initials(p.username||p.discordId))}</div>
+    <div class="personnel-card-info" data-act="view" data-pkey="${esc(key)}">
+      <div class="personnel-card-name">${esc(p.username||'Unknown')}</div>
+      <div class="personnel-card-meta">
+        <span>${p.discordId?esc(p.discordId):'no ID'}</span>
+        ${evCount?`<span class="meta-sep">&middot;</span><span>${evCount} event${evCount!==1?'s':''}</span>`:''}
+      </div>
+    </div>
+    ${p.rank?`<span class="rank-badge">${esc(p.rank)}</span>`:`<span class="rank-badge" style="opacity:.4">no rank</span>`}
+    <div class="personnel-card-actions">
+      <button class="icon-btn copy-btn" title="Edit" data-act="edit" data-pkey="${esc(key)}"><svg class="icon" aria-hidden="true"><use href="#i-pencil"></use></svg></button>
+      <button class="icon-btn info-btn" title="View profile" data-act="view" data-pkey="${esc(key)}"><svg class="icon" aria-hidden="true"><use href="#i-id-badge-2"></use></svg></button>
+      <button class="icon-btn" title="Remove from roster" data-act="del" data-pkey="${esc(key)}"><svg class="icon" aria-hidden="true"><use href="#i-trash"></use></svg></button>
+    </div>
+  </div>`;
+}
+function visiblePersonnel(){
+  const q=personnelQuery.trim().toLowerCase();
+  let list=[...state.personnel];
+  if(q)list=list.filter(p=>(p.username||'').toLowerCase().includes(q)||(p.discordId||'').includes(q)||(p.rank||'').toLowerCase().includes(q));
+  if(personnelSort==='az')list.sort((a,b)=>(a.username||'').localeCompare(b.username||''));
+  else if(personnelSort==='za')list.sort((a,b)=>(b.username||'').localeCompare(a.username||''));
+  else if(personnelSort==='rank')list.sort((a,b)=>(a.rank||'\uffff').localeCompare(b.rank||'\uffff'));
+  else if(personnelSort==='events')list.sort((a,b)=>buildProfile(personnelKey(b)).eventCount-buildProfile(personnelKey(a)).eventCount);
+  else if(personnelSort==='recent')list.reverse();
+  return list;
+}
+function renderPersonnelPage(){
+  const body=g('personnelPageList');if(!body)return;
+  const list=visiblePersonnel();
+  g('personnelToolbarCount').textContent=state.personnel.length?`${list.length} of ${state.personnel.length}`:'';
+  if(!state.personnel.length){
+    body.innerHTML=`<div class="personnel-empty"><svg class="icon" aria-hidden="true"><use href="#i-id-badge-2-off"></use></svg><h3 style="font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--text);font-size:1rem;margin-bottom:4px">No personnel on file</h3><p>Add someone below to start the roster.</p></div>`;
+    return;
+  }
+  if(!list.length){
+    body.innerHTML=`<div class="personnel-empty"><svg class="icon" aria-hidden="true"><use href="#i-filter-off"></use></svg><p>No matches for "${esc(personnelQuery)}".</p></div>`;
+    return;
+  }
+  body.innerHTML=list.map(personnelCardHtml).join('');
+}
+function handlePersonnelAction(e){
+  const btn=e.target.closest('[data-act]');if(!btn)return;
+  const key=btn.dataset.pkey,act=btn.dataset.act;
+  if(act==='view')openProfileModal(key);
+  else if(act==='edit')openEditPersonnelModal(key);
+  else if(act==='del'){
+    const idx=state.personnel.findIndex(p=>personnelKey(p)===key);if(idx===-1)return;
+    const removed=state.personnel[idx];
+    state.personnel.splice(idx,1);saveEvents();renderPersonnelPage();
+    sendWebhook('remove',`Removed ${removed.username||removed.discordId||'Unknown'} from personnel roster`);
+    showToast(`Removed ${removed.username||removed.discordId} from roster`,false,()=>{
+      state.personnel.splice(idx,0,removed);saveEvents();renderPersonnelPage();
+    });
+  }
+}
+g('personnelPageList').addEventListener('click',handlePersonnelAction);
+g('personnelSearch').addEventListener('input',()=>{personnelQuery=g('personnelSearch').value;renderPersonnelPage();});
+g('personnelSortSelect').addEventListener('change',()=>{personnelSort=g('personnelSortSelect').value;renderPersonnelPage();});
+
+function addFromPersonnelForm(){
+  const username=g('newPName').value.trim(),discordId=g('newPId').value.trim(),rank=g('newPRank').value.trim();
+  if(!username&&!discordId){showToast('Add a username or ID first.',true);return;}
+  const key=(discordId||username).toLowerCase();
+  if(state.personnel.some(p=>personnelKey(p)===key)){showToast('Already on the roster.',true);return;}
+  state.personnel.push({id:uid(),username,discordId,rank});
+  saveEvents();renderPersonnelPage();
+  sendWebhook('add',`Added ${username||discordId} to personnel roster${rank?` (${rank})`:''}`);
+  showToast(`${username||discordId} added to roster`);
+  g('newPName').value='';g('newPId').value='';g('newPRank').value='';g('newPName').focus();
+}
+g('addPersonnelBtn').addEventListener('click',addFromPersonnelForm);
+['newPName','newPId','newPRank'].forEach(id=>g(id).addEventListener('keydown',e=>{if(e.key==='Enter')addFromPersonnelForm();}));
+
+function openEditPersonnelModal(key){
+  const rec=findPersonnel(key);if(!rec){showToast('Could not find that record.',true);return;}
+  openModal(`
+    <h3><svg class="icon" style="color:var(--accent)" aria-hidden="true"><use href="#i-pencil"></use></svg> Edit Personnel</h3>
+    <div class="field"><label for="editPName">Username</label><input id="editPName" type="text" value="${esc(rec.username||'')}"></div>
+    <div class="field mono"><label for="editPId">Discord ID</label><input id="editPId" type="text" value="${esc(rec.discordId||'')}"></div>
+    <div class="field"><label for="editPRank">Rank</label><input id="editPRank" type="text" value="${esc(rec.rank||'')}" placeholder="e.g. Sergeant"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="cancelBtn">Cancel</button>
+      <button class="btn-confirm" id="confirmBtn" style="background:var(--accent);color:#fff">Save</button>
+    </div>`,()=>{
+    g('cancelBtn').onclick=closeModal;
+    g('modalBox').classList.add('wide');
+    function commit(){
+      const username=g('editPName').value.trim(),discordId=g('editPId').value.trim(),rank=g('editPRank').value.trim();
+      if(!username&&!discordId){showToast('Username or ID is required.',true);return;}
+      const oldLabel=rec.username||rec.discordId||'Unknown';
+      rec.username=username;rec.discordId=discordId;rec.rank=rank;
+      closeModal();saveEvents();renderPersonnelPage();render();
+      sendWebhook('edit',`Edited personnel record for ${oldLabel}${rank?` \u2014 rank set to ${rank}`:''}`);
+      showToast(`${username||discordId} updated`);
+    }
+    g('confirmBtn').onclick=commit;
+    ['editPName','editPId','editPRank'].forEach(id=>g(id).addEventListener('keydown',e=>{if(e.key==='Enter')commit();}));
+  });
+}
+
+/* New event */
+function openNewEventModal(){
+  openModal(`
+    <h3><svg class="icon" style="color:var(--accent)" aria-hidden="true"><use href="#i-calendar-plus"></use></svg> New Event</h3>
+    <div class="field"><label for="evName">Event name</label><input id="evName" type="text" placeholder="e.g. Friday Game Night"></div>
+    <div class="field"><label for="evDate">Date</label><input id="evDate" type="text" value="${todayStr()}" placeholder="YYYY-MM-DD"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="cancelBtn">Cancel</button>
+      <button class="btn-confirm" id="confirmBtn" style="background:var(--accent);color:#fff">Create</button>
+    </div>`,()=>{
+    g('cancelBtn').onclick=closeModal;
+    g('confirmBtn').onclick=()=>{
+      const name=g('evName').value.trim();if(!name){showToast('Give the event a name.',true);return;}
+      const date=g('evDate').value.trim();
+      const ev={id:uid(),name,date,createdAt:new Date().toISOString(),host:[],cohost:[],attendee:[]};
+      state.events.unshift(ev);closeModal();persist();
+      sendWebhook('create',`Created event ${name}${date?` (${date})`:''}`);
+    };
+    g('evName').addEventListener('keydown',e=>{if(e.key==='Enter')g('confirmBtn').click();});
+  });
+}
+
+const roleCfg={host:{label:'Host',color:'var(--host)'},cohost:{label:'Co-Host',color:'var(--cohost)'},attendee:{label:'Attendee',color:'var(--attendee)'}};
+
+/* Add person */
+function openAddPersonModal(eventId,role){
+  const cfg=roleCfg[role];const existingPeople=combinedPeoplePool();
+  openModal(`
+    <h3><span class="role-dot" style="background:${cfg.color}"></span>Add ${cfg.label}</h3>
+    <div class="field"><label for="pName">Discord username</label>
+      <div class="field-inner"><input id="pName" type="text" placeholder="e.g. nova.exe" autocomplete="off"><div class="autocomplete-drop" id="acDrop"></div></div>
+    </div>
+    <div class="field mono"><label for="pId">Discord ID</label>
+      <input id="pId" type="text" placeholder="e.g. 482910374659028992">
+      <div class="field-hint">Right-click user in Discord (Dev Mode on) &rarr; Copy User ID. Tip: add people once under Personnel and they'll be selectable here automatically.</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="cancelBtn">Cancel</button>
+      <button class="btn-confirm" id="confirmBtn" style="background:${cfg.color};color:#fff">Confirm</button>
+    </div>`,()=>{
+    g('cancelBtn').onclick=closeModal;
+    const pName=g('pName'),pId=g('pId'),drop=g('acDrop');let acIdx=-1;
+    function selectAcItem(p){pName.value=p.username||'';pId.value=p.discordId||'';drop.classList.remove('show');acIdx=-1;}
+    pName.addEventListener('input',()=>{
+      const q=pName.value.trim();if(!q){drop.classList.remove('show');return;}
+      const seen=new Set();
+      const matches=existingPeople.filter(p=>{
+        const k=personKey(p);
+        if(!p.username||seen.has(k))return false;
+        seen.add(k);
+        return p.username.toLowerCase().includes(q.toLowerCase());
+      }).slice(0,6);
+      if(!matches.length){drop.classList.remove('show');return;}
+      const rc={host:'var(--host)',cohost:'var(--cohost)',attendee:'var(--attendee)'};
+      drop.innerHTML=matches.map((p,i)=>{
+        const rank=rankFor(personKey(p));
+        return `<div class="ac-item" data-idx="${i}"><div class="ac-avatar" style="background:${rc[p.role]}22;color:${rc[p.role]}">${esc(initials(p.username))}</div><div class="ac-info"><div class="ac-name">${esc(p.username)}</div><div class="ac-sub">${p.discordId?esc(p.discordId):'no ID'}${p._fromRoster?' &middot; roster':''}</div></div><div class="ac-tags">${!p._fromRoster?`<span class="ac-role" style="background:${rc[p.role]}1f;color:${rc[p.role]}">${p.role}</span>`:''}${rank?`<span class="rank-badge sm">${esc(rank)}</span>`:''}</div></div>`;
+      }).join('');
+      drop._matches=matches;drop.classList.add('show');acIdx=-1;
+    });
+    pName.addEventListener('keydown',e=>{
+      const items=[...drop.querySelectorAll('.ac-item')];if(!items.length)return;
+      if(e.key==='ArrowDown'){e.preventDefault();acIdx=Math.min(acIdx+1,items.length-1);items.forEach((it,i)=>it.classList.toggle('active',i===acIdx));}
+      else if(e.key==='ArrowUp'){e.preventDefault();acIdx=Math.max(acIdx-1,0);items.forEach((it,i)=>it.classList.toggle('active',i===acIdx));}
+      else if(e.key==='Enter'&&acIdx>=0){e.preventDefault();selectAcItem(drop._matches[acIdx]);}
+      else if(e.key==='Escape'){drop.classList.remove('show');}
+    });
+    drop.addEventListener('click',e=>{const item=e.target.closest('.ac-item');if(!item)return;selectAcItem(drop._matches[+item.dataset.idx]);});
+    g('confirmBtn').onclick=()=>{
+      const username=pName.value.trim(),discordId=pId.value.trim();
+      if(!username&&!discordId){showToast('Add a username or ID first.',true);return;}
+      const ev=state.events.find(e=>e.id===eventId);if(!ev)return;
+      ev[role].push({id:uid(),username,discordId});closeModal();persist();
+      showToast(`${username||discordId} added as ${roleCfg[role].label}`);
+      sendWebhook('add',`Added ${username||discordId} as ${cfg.label} to ${ev.name}`);
+    };
+    pId.addEventListener('keydown',e=>{if(e.key==='Enter')g('confirmBtn').click();});
+  });
+}
+
+/* Delete event */
+function confirmDeleteEvent(eventId){
+  const ev=state.events.find(e=>e.id===eventId);if(!ev)return;
+  openModal(`
+    <h3 style="color:var(--danger)"><svg class="icon" aria-hidden="true"><use href="#i-trash"></use></svg> Delete Event?</h3>
+    <p style="color:var(--text-dim);font-size:12px;margin-bottom:4px;line-height:1.6;font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace">Removes <strong style="color:var(--text)">${esc(ev.name)}</strong> and all roster data.</p>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="cancelBtn">Cancel</button>
+      <button class="btn-confirm" id="confirmBtn" style="background:var(--danger);color:#fff">Confirm Delete</button>
+    </div>`,()=>{
+    g('cancelBtn').onclick=closeModal;
+    g('confirmBtn').onclick=()=>{
+      const idx=state.events.findIndex(e=>e.id===eventId);
+      const removed=state.events[idx];
+      state.events=state.events.filter(e=>e.id!==eventId);closeModal();persist();
+      sendWebhook('delete',`Deleted event ${ev.name}`);
+      showToast(`Deleted ${ev.name}`,false,()=>{
+        state.events.splice(idx,0,removed);persist();
+        showToast('Event restored.');
+      });
+    };
+  });
+}
+
+/* Duplicate event */
+function duplicateEvent(eventId){
+  const ev=state.events.find(e=>e.id===eventId);if(!ev)return;
+  const copy={
+    id:uid(),name:ev.name+' (copy)',date:todayStr(),createdAt:new Date().toISOString(),
+    host:(ev.host||[]).map(p=>({...p,id:uid()})),
+    cohost:(ev.cohost||[]).map(p=>({...p,id:uid()})),
+    attendee:(ev.attendee||[]).map(p=>({...p,id:uid()}))
+  };
+  const idx=state.events.findIndex(e=>e.id===eventId);
+  state.events.splice(idx,0,copy);persist();
+  showToast(`Duplicated as "${copy.name}"`);
+  sendWebhook('create',`Duplicated ${ev.name} as ${copy.name}`);
+}
+
+/* Inline edit: event name */
+function startEditName(eventId){
+  const ev=state.events.find(e=>e.id===eventId);if(!ev)return;
+  const el=document.querySelector(`.event-card[data-evid="${eventId}"] .event-name`);if(!el)return;
+  const oldName=ev.name;
+  const input=document.createElement('input');
+  input.className='event-name-input';input.value=oldName;
+  el.replaceWith(input);input.focus();input.select();
+  function commit(){
+    const val=input.value.trim()||oldName;
+    if(val!==oldName){ev.name=val;persist();sendWebhook('edit',`Renamed ${oldName} to ${val}`);}
+    else render();
+  }
+  input.addEventListener('keydown',e=>{if(e.key==='Enter')commit();else if(e.key==='Escape')render();});
+  input.addEventListener('blur',commit);
+}
+
+/* Inline edit: event date */
+function startEditDate(eventId){
+  const ev=state.events.find(e=>e.id===eventId);if(!ev)return;
+  const el=document.querySelector(`.event-card[data-evid="${eventId}"] .event-date-edit`);if(!el)return;
+  const oldDate=ev.date||'';
+  const input=document.createElement('input');
+  input.className='event-date-input';input.value=oldDate;input.placeholder='YYYY-MM-DD';
+  el.replaceWith(input);input.focus();input.select();
+  function commit(){
+    const val=input.value.trim();
+    if(val!==oldDate){ev.date=val;persist();sendWebhook('edit',`Changed date of ${ev.name} to ${val||'(none)'}`);}
+    else render();
+  }
+  input.addEventListener('keydown',e=>{if(e.key==='Enter')commit();else if(e.key==='Escape')render();});
+  input.addEventListener('blur',commit);
+}
+
+/* Attendance modal */
+function openAttendanceModal(eventId){
+  const ev=state.events.find(e=>e.id===eventId);if(!ev)return;
+  const h=ev.host?.length||0,c=ev.cohost?.length||0,a=ev.attendee?.length||0;
+  const total=h+c+a;const score=h*3+c*2+a;const maxScore=total*3||1;
+  const richness=total?Math.round((score/maxScore)*100):0;
+  const pctColor=richness>=75?'var(--attendee)':richness>=40?'var(--accent)':'var(--danger)';
+  openModal(`
+    <h3><svg class="icon" style="color:var(--accent)" aria-hidden="true"><use href="#i-chart-pie"></use></svg> Attendance &mdash; ${esc(ev.name)}</h3>
+    <div class="att-insight">
+      <div class="att-insight-head">Participation richness</div>
+      <div class="att-big" style="color:${pctColor}">${richness}%</div>
+      <div class="att-sub">${total} total &middot; weighted ${score}/${maxScore}</div>
+      <div class="att-breakdown-row">
+        ${h?`<div class="att-bk-item"><div class="att-bk-dot" style="background:var(--host)"></div><span style="color:var(--host)">${h} host${h!==1?'s':''}</span></div>`:''}
+        ${c?`<div class="att-bk-item"><div class="att-bk-dot" style="background:var(--cohost)"></div><span style="color:var(--cohost)">${c} co-host${c!==1?'s':''}</span></div>`:''}
+        ${a?`<div class="att-bk-item"><div class="att-bk-dot" style="background:var(--attendee)"></div><span style="color:var(--attendee)">${a} attendee${a!==1?'s':''}</span></div>`:''}
+        ${!total?`<span style="color:var(--text-muted);font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:11px">No personnel yet.</span>`:''}
+      </div>
+    </div>
+    <div style="margin-top:14px;">
+      <div class="profile-section-title" style="margin-bottom:8px">Role breakdown</div>
+      ${[['host',h,'var(--host)','Host'],['cohost',c,'var(--cohost)','Co-Host'],['attendee',a,'var(--attendee)','Attendee']].map(([,cnt,col,lbl])=>`
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <span style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:11px;color:${col};width:68px;flex-shrink:0">${lbl}</span>
+          <div style="flex:1;height:6px;background:var(--surface-raised);border-radius:999px;overflow:hidden;border:1px solid var(--border)"><div style="height:100%;width:${total?Math.round((cnt/total)*100):0}%;background:${col};border-radius:999px"></div></div>
+          <span style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:11px;color:var(--text);min-width:26px;text-align:right">${cnt}</span>
+          <span style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10px;color:var(--text-muted);min-width:32px">${total?Math.round((cnt/total)*100):0}%</span>
+        </div>`).join('')}
+    </div>
+    <div class="modal-actions"><button class="btn-confirm" id="confirmBtn" style="background:var(--accent);color:#fff">Done</button></div>`,
+  ()=>{g('confirmBtn').onclick=closeModal;});
+}
+
+/* Profile modal */
+function openProfileModal(key){
+  const prof=buildProfile(key);
+  if(!prof.eventCount&&!prof.username&&!prof.discordId&&!prof.host&&!prof.cohost&&!prof.attendee){showToast('No data for this person.',true);return;}
+  const name=prof.username||prof.discordId||'Unknown';
+  const totalEvents=state.events.length;
+  const pct=totalEvents?Math.round((prof.eventCount/totalEvents)*100):0;
+  const pctColor=pct>=75?'var(--attendee)':pct>=40?'var(--accent)':'var(--danger)';
+  const lastRole=prof.eventDetails[prof.eventDetails.length-1]?.role||'attendee';
+  const roleColor=lastRole==='host'?'var(--host)':lastRole==='cohost'?'var(--cohost)':'var(--attendee)';
+  const weeks=activityGraphData(key);
+  const maxPts=Math.max(...weeks.map(w=>w.pts),1);
+  const lastActive=prof.lastActive?prof.lastActive.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}):'&mdash;';
+  const streak=personStreak(key);
+
+  const graphBars=weeks.map((w,i)=>{
+    const pct=Math.round((w.pts/maxPts)*100);
+    const isRecent=(i===weeks.length-1);
+    const col=isRecent?'var(--accent)':w.pts>0?'var(--border-light)':'var(--surface-raised)';
+    return `<div class="activity-bar" style="height:${Math.max(pct,4)}%;background:${col}">
+      <div class="activity-bar-tooltip">${w.label}: ${w.pts}pt</div>
+    </div>`;
+  }).join('');
+  const weekLabels=weeks.map((w,i)=>`<div class="activity-week-label">${i===weeks.length-1?'now':i===0?w.label:''}</div>`).join('');
+
+  const recent=[...prof.eventDetails].reverse().slice(0,5);
+  const recentHtml=recent.map(ev=>{
+    const rc={host:'var(--host)',cohost:'var(--cohost)',attendee:'var(--attendee)'};
+    return `<div class="profile-meta-row">
+      <span class="profile-meta-key">${esc(ev.evName)}</span>
+      <span style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10px;padding:2px 7px;border-radius:2px;background:${rc[ev.role]}14;color:${rc[ev.role]}">${ev.role}</span>
+    </div>`;
+  }).join('');
+
+  const key2=key;
+  const adjList=adjustmentsFor(key2);
+  const adjHtml=adjList.length?`<div style="margin-top:14px;"><div class="profile-section-title" style="margin-bottom:8px">Manual adjustments</div>${adjList.map(a=>{
+    const parts=[];
+    if(a.host)parts.push(`<span style="color:var(--host)">${a.host>0?'+':''}${a.host}H</span>`);
+    if(a.cohost)parts.push(`<span style="color:var(--cohost)">${a.cohost>0?'+':''}${a.cohost}C</span>`);
+    if(a.attendee)parts.push(`<span style="color:var(--attendee)">${a.attendee>0?'+':''}${a.attendee}A</span>`);
+    return `<div class="profile-meta-row"><span class="profile-meta-key">${esc(a.note||'Manual adjustment')}</span><span style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10.5px">${parts.join(' ')}</span></div>`;
+  }).join('')}</div>`:'';
+
+  openModal(`
+    <div class="profile-header">
+      <div class="profile-avatar-lg" style="background:${roleColor}18;color:${roleColor};border-color:${roleColor}40">${esc(initials(name))}</div>
+      <div>
+        <div class="profile-name">${esc(name)}</div>
+        ${prof.discordId?`<div class="profile-id"><svg class="icon" aria-hidden="true"><use href="#i-brand-discord"></use></svg> ${esc(prof.discordId)}</div>`:''}
+        <span class="profile-role-badge" style="background:${roleColor}14;color:${roleColor}"><svg class="icon" aria-hidden="true" style="font-size:9px"><use href="#i-star"></use></svg> ${lastRole}</span>
+        ${prof.rank?`<span class="rank-badge" style="margin-left:5px">${esc(prof.rank)}</span>`:''}
+        ${streak>=2?`<span class="profile-role-badge" style="background:var(--host-dim);color:var(--host);margin-left:5px"><svg class="icon" aria-hidden="true" style="font-size:9px"><use href="#i-flame"></use></svg> ${streak} streak</span>`:''}
+      </div>
+    </div>
+
+    <div class="profile-stats-grid">
+      <div class="profile-stat"><div class="profile-stat-val">${prof.total}</div><div class="profile-stat-lbl">Total Score</div></div>
+      <div class="profile-stat"><div class="profile-stat-val">${prof.eventCount}</div><div class="profile-stat-lbl">Events</div></div>
+      <div class="profile-stat"><div class="profile-stat-val" style="color:${pctColor}">${pct}%</div><div class="profile-stat-lbl">Attendance</div></div>
+    </div>
+
+    <div class="profile-section-title">Role breakdown</div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+      ${prof.host?`<div style="flex:1;background:var(--host-dim);border:1px solid var(--host-dim);border-radius:var(--r-sm);padding:8px;text-align:center;min-width:70px"><div style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:16px;font-weight:600;color:var(--host)">${prof.host}</div><div style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:9px;color:var(--text-muted);margin-top:2px;text-transform:uppercase;letter-spacing:.06em">Host</div></div>`:''}
+      ${prof.cohost?`<div style="flex:1;background:var(--cohost-dim);border:1px solid var(--cohost-dim);border-radius:var(--r-sm);padding:8px;text-align:center;min-width:70px"><div style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:16px;font-weight:600;color:var(--cohost)">${prof.cohost}</div><div style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:9px;color:var(--text-muted);margin-top:2px;text-transform:uppercase;letter-spacing:.06em">Co-Host</div></div>`:''}
+      ${prof.attendee?`<div style="flex:1;background:var(--attendee-dim);border:1px solid var(--attendee-dim);border-radius:var(--r-sm);padding:8px;text-align:center;min-width:70px"><div style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:16px;font-weight:600;color:var(--attendee)">${prof.attendee}</div><div style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:9px;color:var(--text-muted);margin-top:2px;text-transform:uppercase;letter-spacing:.06em">Attendee</div></div>`:''}
+    </div>
+
+    <div class="profile-section-title">Activity &mdash; last 8 weeks</div>
+    <div class="activity-graph" id="actGraph">${graphBars}</div>
+    <div class="activity-week-labels">${weekLabels}</div>
+
+    <div style="margin-top:16px;">
+      <div class="profile-meta-row"><span class="profile-meta-key">Last active</span><span class="profile-meta-val">${lastActive}</span></div>
+      <div class="profile-meta-row"><span class="profile-meta-key">Best streak</span><span class="profile-meta-val">${streak} event${streak!==1?'s':''}</span></div>
+    </div>
+
+    ${recent.length?`<div style="margin-top:14px;"><div class="profile-section-title" style="margin-bottom:8px">Recent events</div>${recentHtml}</div>`:''}
+    ${adjHtml}
+
+    <div class="modal-actions">
+      <button class="btn-secondary" id="shareBtn" title="${state.webhookUrl?'Send these stats to the configured Discord webhook':'No webhook configured'}"><svg class="icon" aria-hidden="true"><use href="#i-brand-discord"></use></svg> Share</button>
+      <button class="btn-confirm" id="confirmBtn" style="background:var(--surface-raised);color:var(--text);border:1px solid var(--border-light)">Close</button>
+    </div>`,
+  ()=>{
+    g('confirmBtn').onclick=closeModal;
+    const shareBtn=g('shareBtn');
+    if(shareBtn){
+      shareBtn.addEventListener('click',async()=>{
+        if(!state.webhookUrl){showToast('No webhook configured. Add one in Webhook settings.',true);return;}
+        const origHtml=shareBtn.innerHTML;
+        shareBtn.disabled=true;shareBtn.innerHTML='<svg class="icon spin" aria-hidden="true"><use href="#i-loader-2"></use></svg> Sending...';
+        const ok=await sendProfileToWebhook(key);
+        if(ok){
+          shareBtn.innerHTML='<svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg> Sent';
+          shareBtn.classList.add('sent');
+          showToast(`${name}'s stats sent to Discord.`);
+          setTimeout(()=>{shareBtn.disabled=false;shareBtn.innerHTML=origHtml;shareBtn.classList.remove('sent');},2200);
+        }else{
+          shareBtn.innerHTML='<svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg> Failed';
+          showToast('Could not send to Discord.',true);
+          setTimeout(()=>{shareBtn.disabled=false;shareBtn.innerHTML=origHtml;},2200);
+        }
+      });
+    }
+    const bars=g('actGraph')?.querySelectorAll('.activity-bar');
+    if(bars){bars.forEach(b=>{const h=b.style.height;b.style.height='0';requestAnimationFrame(()=>{b.style.transition='height .5s cubic-bezier(.22,.61,.36,1)';b.style.height=h;});});}
+  });
+}
+
+/* Remove person */
+function removePerson(eventId,role,personId){
+  const ev=state.events.find(e=>e.id===eventId);if(!ev)return;
+  const idx=(ev[role]||[]).findIndex(p=>p.id===personId);
+  const person=ev[role][idx];
+  ev[role]=ev[role].filter(p=>p.id!==personId);persist();
+  if(person){
+    sendWebhook('remove',`Removed ${person.username||person.discordId||'Unknown'} (${roleCfg[role].label}) from ${ev.name}`);
+    showToast(`Removed ${person.username||person.discordId}`,false,()=>{
+      ev[role].splice(idx,0,person);persist();showToast('Restored.');
+    });
+  }
+}
+
+/* Move person between roles */
+function movePerson(eventId,fromRole,personId,toRole){
+  if(fromRole===toRole)return;
+  const ev=state.events.find(e=>e.id===eventId);if(!ev)return;
+  const idx=(ev[fromRole]||[]).findIndex(p=>p.id===personId);
+  if(idx===-1)return;
+  const [person]=ev[fromRole].splice(idx,1);
+  ev[toRole].push(person);persist();
+  sendWebhook('move',`Moved ${person.username||person.discordId||'Unknown'} from ${roleCfg[fromRole].label} to ${roleCfg[toRole].label} in ${ev.name}`);
+  requestAnimationFrame(()=>{
+    const pill=document.querySelector(`.person-pill[data-pid="${personId}"][data-role="${toRole}"]`);
+    if(pill)pill.classList.add('landed');
+  });
+}
+
+/* Copy roster */
+function copyRoster(eventId){
+  const ev=state.events.find(e=>e.id===eventId);if(!ev)return;
+  const lines=[`# ${ev.name}`];
+  for(const role of['host','cohost','attendee']){
+    const arr=ev[role]||[];if(!arr.length)continue;
+    lines.push(`\n**${roleCfg[role].label}**`);
+    arr.forEach(p=>lines.push(p.discordId?`<@${p.discordId}>`:(p.username||'?')));
+  }
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>showToast('Roster copied.')).catch(()=>showToast('Copy failed.',true));
+}
+
+/* CSV export */
+function exportLeaderboardCsv(){
+  const data=leaderboardData(eventsForPeriod(lbPeriod),lbPeriod==='total');
+  if(!data.length){showToast('Nothing to export yet.',true);return;}
+  const rows=[['Name','Discord ID','Host','Co-Host','Attendee','Events','Total Score']];
+  [...data].sort((a,b)=>b.total-a.total).forEach(e=>rows.push([e.username||'',e.discordId||'',e.host,e.cohost,e.attendee,e.eventCount,e.total]));
+  const csv=rows.map(r=>r.map(v=>{const s=String(v??'');return /[",\n]/.test(s)?`"${s.replace(/"/g,'""')}"`:s;}).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`jttf-standings-${todayStr()}.csv`;a.click();URL.revokeObjectURL(url);
+  showToast('Standings exported.');
+}
+g('exportCsvBtn').addEventListener('click',exportLeaderboardCsv);
+
+/* Leaderboard */
+function leaderboardData(eventsSubset,includeAdjustments){
+  const map=new Map();
+  for(const ev of eventsSubset){
+    for(const role of['host','cohost','attendee']){
+      for(const p of(ev[role]||[])){
+        const key=personKey(p);
+        if(!map.has(key))map.set(key,{username:p.username,discordId:p.discordId,key,host:0,cohost:0,attendee:0,events:new Set()});
+        const entry=map.get(key);entry[role]++;entry.events.add(ev.id);
+        if(!entry.username&&p.username)entry.username=p.username;
+        if(!entry.discordId&&p.discordId)entry.discordId=p.discordId;
+      }
+    }
+  }
+  if(includeAdjustments)applyAdjustmentsToMap(map);
+  return [...map.values()].map(e=>({...e,eventCount:e.events.size,hosting:e.host+e.cohost,total:e.host*3+e.cohost*2+e.attendee}));
+}
+function overallPlacement(key){
+  const ranked=leaderboardData(state.events,true).filter(e=>e.total>0).sort((a,b)=>b.total-a.total);
+  const idx=ranked.findIndex(e=>e.key===key);
+  return idx===-1?null:idx+1;
+}
+function eventsForPeriod(period){
+  if(period==='total')return state.events;
+  const now=new Date();const thisWk=weekBounds(now);let start,end;
+  if(period==='thisweek'){start=thisWk.start;end=thisWk.end;}
+  else{end=new Date(thisWk.start);end.setDate(end.getDate()-1);start=new Date(end);start.setDate(start.getDate()-6);}
+  return state.events.filter(ev=>{const d=parseEventDate(ev);return d&&inRange(d,start,end);});
+}
+let lbPeriod='total',lbMetric='total';
+function updateLbRange(){
+  const rangeEl=g('lbRange');if(lbPeriod==='total'){rangeEl.textContent='';return;}
+  const now=new Date();const thisWk=weekBounds(now);let start,end;
+  if(lbPeriod==='thisweek'){start=thisWk.start;end=thisWk.end;}
+  else{end=new Date(thisWk.start);end.setDate(end.getDate()-1);start=new Date(end);start.setDate(start.getDate()-6);}
+  rangeEl.textContent=`${fmtShort(start)} \u2014 ${fmtShort(end)}`;
+}
+function renderLeaderboard(){
+  updateLbRange();
+  const list=g('lbList');
+  const prevPositions=new Map();
+  list.querySelectorAll('.lb-row[data-key]').forEach(row=>{prevPositions.set(row.dataset.key,row.getBoundingClientRect());});
+  const evSubset=eventsForPeriod(lbPeriod);const data=leaderboardData(evSubset,lbPeriod==='total');
+  if(!data.length){list.innerHTML=`<div class="lb-empty"><svg class="icon" aria-hidden="true"><use href="#i-shield-off"></use></svg>${lbPeriod==='total'?'No activity recorded.':'No events in this period.'}</div>`;return;}
+  const sortKey=lbMetric==='total'?'total':lbMetric==='events'?'eventCount':'hosting';
+  const sorted=[...data].sort((a,b)=>b[sortKey]-a[sortKey]).filter(e=>e[sortKey]>0).slice(0,10);
+  if(!sorted.length){list.innerHTML=`<div class="lb-empty"><svg class="icon"><use href="#i-shield-off"></use></svg>No data.</div>`;return;}
+  list.innerHTML=sorted.map((e,i)=>{
+    const name=e.username||e.discordId||'Unknown';
+    const streak=personStreak(e.key);
+    return `<div class="lb-row" data-key="${esc(e.key)}" onclick="openProfileModal('${esc(e.key)}')">
+      <span class="lb-rank">${i+1}</span>
+      <div class="lb-avatar">${esc(initials(name))}</div>
+      <div class="lb-info">
+        <div class="lb-name" title="${esc(name)}">${esc(name)}${streak>=3?` <span class="lb-streak" title="${streak}-event streak"><svg class="icon" aria-hidden="true"><use href="#i-flame"></use></svg>${streak}</span>`:''}</div>
+        <div class="lb-breakdown">${e.host?`<span class="h">${e.host}H</span>`:''}${e.cohost?`<span class="c">${e.cohost}C</span>`:''}${e.attendee?`<span class="a">${e.attendee}A</span>`:''}</div>
+      </div>
+      <span class="lb-score" data-score="${e[sortKey]}">${e[sortKey]}</span>
+    </div>`;
+  }).join('');
+  const newRows=[...list.querySelectorAll('.lb-row[data-key]')];
+  let anyAnimated=false;
+  newRows.forEach(row=>{
+    const key=row.dataset.key;const prev=prevPositions.get(key);
+    if(!prev)return;
+    row.style.animation='none';
+    const next=row.getBoundingClientRect();
+    const dy=prev.top-next.top;
+    if(Math.abs(dy)>1){
+      anyAnimated=true;
+      row.style.transform=`translateY(${dy}px)`;
+      requestAnimationFrame(()=>{
+        row.style.transition='transform .42s cubic-bezier(.22,.61,.36,1)';
+        row.style.transform='';
+      });
+    }
+  });
+  newRows.forEach(row=>{
+    const scoreEl=row.querySelector('.lb-score');
+    if(scoreEl)animateCount(scoreEl,+scoreEl.dataset.score,{duration:anyAnimated?420:550});
+  });
+}
+g('lbPeriodTabs').addEventListener('click',e=>{const btn=e.target.closest('.lb-period-tab');if(!btn)return;lbPeriod=btn.dataset.period;[...g('lbPeriodTabs').children].forEach(c=>c.classList.toggle('active',c===btn));renderLeaderboard();renderStats();});
+g('lbTabs').addEventListener('click',e=>{const btn=e.target.closest('.lb-tab');if(!btn)return;lbMetric=btn.dataset.metric;[...g('lbTabs').children].forEach(c=>c.classList.toggle('active',c===btn));renderLeaderboard();});
+
+/* Stats */
+function renderStats(){
+  const evSubset=eventsForPeriod(lbPeriod);
+  const seen=new Set();
+  evSubset.forEach(ev=>['host','cohost','attendee'].forEach(role=>(ev[role]||[]).forEach(p=>seen.add(personKey(p)))));
+  const avgAtt=evSubset.length?Math.round(evSubset.reduce((s,ev)=>s+(ev.host?.length||0)+(ev.cohost?.length||0)+(ev.attendee?.length||0),0)/evSubset.length):0;
+  const data=leaderboardData(evSubset,lbPeriod==='total');
+  const topHost=[...data].sort((a,b)=>b.host-a.host)[0];
+  animateCount(g('statEvents'),evSubset.length);
+  animateCount(g('statPeople'),seen.size);
+  animateCount(g('statAvgAtt'),avgAtt,{fallback:'&ndash;'});
+  if(!avgAtt)g('statAvgAtt').textContent='&ndash;';
+  g('statTopHost').textContent=topHost?.host>0?(topHost.username||topHost.discordId||'&ndash;').slice(0,8):'&ndash;';
+}
+
+/* Person pill HTML — username + rank only, no Discord ID */
+function personPillHtml(p,role,eventId){
+  const name=p.username||'Unknown';
+  const key=personKey(p);
+  const rank=rankFor(key);
+  const totalEvents=state.events.length;
+  let pct=null,pctClass='mid';
+  if(totalEvents>0){
+    let cnt=0;
+    for(const ev of state.events){let f=false;for(const r of['host','cohost','attendee']){if(f)break;for(const q of(ev[r]||[])){if(personKey(q)===key){f=true;break;}}}if(f)cnt++;}
+    pct=Math.round((cnt/totalEvents)*100);
+    pctClass=pct>=75?'high':pct<40?'low':'mid';
+  }
+  return `<div class="person-pill" draggable="true" data-pid="${p.id}" data-role="${role}" data-evid="${eventId}">
+    <svg class="icon drag-handle" aria-hidden="true" title="Drag to change role"><use href="#i-grip-vertical"></use></svg>
+    <div class="pill-clickable" onclick="openProfileModal('${esc(key)}')" title="View profile">
+      <div class="avatar">${esc(initials(name))}</div>
+      <span class="person-name">${esc(name)}</span>
+      ${rank?`<span class="rank-badge sm">${esc(rank)}</span>`:''}
+      ${pct!==null?`<span class="person-pct ${pctClass}" data-pct="${pct}">${pct}%</span>`:''}
+    </div>
+    <button class="remove-x" title="Remove" onclick="removePerson('${eventId}','${role}','${p.id}')"><svg class="icon" aria-hidden="true" style="font-size:11px"><use href="#i-x"></use></svg></button>
+  </div>`;
+}
+
+function roleColHtml(ev,role){
+  const cfg=roleCfg[role];const people=ev[role]||[];
+  return `<div class="role-col ${role}" data-role="${role}" data-evid="${ev.id}">
+    <div class="role-label">${cfg.label}<span class="cnt">${people.length}</span></div>
+    <div class="person-list">${people.map(p=>personPillHtml(p,role,ev.id)).join('')}</div>
+    <button class="add-row" onclick="openAddPersonModal('${ev.id}','${role}')"><svg class="icon" style="font-size:11px" aria-hidden="true"><use href="#i-plus"></use></svg>Add ${cfg.label.toLowerCase()}</button>
+  </div>`;
+}
+
+function attendanceBarHtml(ev){
+  const h=ev.host?.length||0,c=ev.cohost?.length||0,a=ev.attendee?.length||0;
+  const total=h+c+a;if(!total)return '';
+  const score=h*3+c*2+a;const maxScore=total*3;
+  const richness=Math.round((score/maxScore)*100);
+  const fillClass=richness>=75?'high':richness<35?'low':'';
+  const col=richness>=75?'color:var(--attendee)':richness<35?'color:var(--danger)':'';
+  return `<div class="attendance-bar-wrap">
+    <span class="attendance-label">Richness</span>
+    <div class="attendance-track"><div class="attendance-fill ${fillClass}" style="width:${richness}%"></div></div>
+    <span class="attendance-pct" style="${col}" data-richness="${richness}">${richness}%</span>
+    <button class="icon-btn info-btn" title="Attendance details" onclick="openAttendanceModal('${ev.id}')" style="font-size:12px"><svg class="icon" aria-hidden="true"><use href="#i-chart-pie"></use></svg></button>
+  </div>`;
+}
+
+function eventCardHtml(ev){
+  const h=ev.host?.length||0,c=ev.cohost?.length||0,a=ev.attendee?.length||0,tot=h+c+a;
+  return `<div class="event-card" data-evid="${ev.id}">
+    <div class="event-head">
+      <div class="event-head-left">
+        <div class="event-icon"><svg class="icon" aria-hidden="true"><use href="#i-target"></use></svg></div>
+        <div class="event-name-row">
+          <div class="event-name" title="Click to rename" onclick="startEditName('${ev.id}')">${esc(ev.name)}</div>
+          <div class="event-meta">${ev.date?`<span class="event-date-edit" title="Click to change date" onclick="startEditDate('${ev.id}')">${esc(ev.date)}</span><span class="meta-sep">&middot;</span>`:`<span class="event-date-edit" title="Click to set date" onclick="startEditDate('${ev.id}')">+ date</span><span class="meta-sep">&middot;</span>`}<span>${tot} personnel</span></div>
+        </div>
+      </div>
+      <div class="event-head-right">
+        <div class="count-pills">
+          ${h?`<span class="count-pill h">${h}H</span>`:''}
+          ${c?`<span class="count-pill c">${c}C</span>`:''}
+          ${a?`<span class="count-pill a">${a}A</span>`:''}
+        </div>
+        <button class="icon-btn info-btn" title="Send to event webhook" onclick="openSendEventModal('${ev.id}')"><svg class="icon" aria-hidden="true"><use href="#i-image"></use></svg></button>
+        <button class="icon-btn dup-btn" title="Duplicate event" onclick="duplicateEvent('${ev.id}')"><svg class="icon" aria-hidden="true"><use href="#i-copy"></use></svg></button>
+        <button class="icon-btn copy-btn" title="Copy roster" onclick="copyRoster('${ev.id}')"><svg class="icon" aria-hidden="true"><use href="#i-clipboard-copy"></use></svg></button>
+        <button class="icon-btn" title="Delete event" onclick="confirmDeleteEvent('${ev.id}')"><svg class="icon" aria-hidden="true"><use href="#i-trash"></use></svg></button>
+      </div>
+    </div>
+    ${attendanceBarHtml(ev)}
+    <div class="roles-grid">${roleColHtml(ev,'host')}${roleColHtml(ev,'cohost')}${roleColHtml(ev,'attendee')}</div>
+  </div>`;
+}
+
+function visibleEvents(){
+  let list=[...state.events];
+  if(eventFilterQuery){
+    const q=eventFilterQuery.toLowerCase();
+    list=list.filter(ev=>(ev.name||'').toLowerCase().includes(q));
+  }
+  const sizeOf=ev=>(ev.host?.length||0)+(ev.cohost?.length||0)+(ev.attendee?.length||0);
+  if(eventSort==='oldest')list.sort((a,b)=>(parseEventDate(a)||0)-(parseEventDate(b)||0));
+  else if(eventSort==='newest')list.sort((a,b)=>(parseEventDate(b)||0)-(parseEventDate(a)||0));
+  else if(eventSort==='most')list.sort((a,b)=>sizeOf(b)-sizeOf(a));
+  else if(eventSort==='least')list.sort((a,b)=>sizeOf(a)-sizeOf(b));
+  else if(eventSort==='az')list.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  return list;
+}
+
+function render(){
+  const c=g('eventsContainer');
+  const visible=visibleEvents();
+  if(!state.events.length){
+    c.innerHTML=`<div class="empty-state"><div class="empty-icon"><svg class="icon" aria-hidden="true"><use href="#i-shield-off"></use></svg></div><h3>No operations logged</h3><p>Create your first event to begin tracking personnel.</p></div>`;
+  }else if(!visible.length){
+    c.innerHTML=`<div class="empty-state"><div class="empty-icon"><svg class="icon" aria-hidden="true"><use href="#i-filter-off"></use></svg></div><h3>No matches</h3><p>No events match "${esc(eventFilterQuery)}".</p></div>`;
+  }else{
+    c.innerHTML=visible.map(eventCardHtml).join('');
+  }
+  g('toolbarCount').textContent=state.events.length?`${visible.length} of ${state.events.length}`:'';
+  attachDragHandlers();
+  c.querySelectorAll('.attendance-pct[data-richness]').forEach(el=>{
+    const target=+el.dataset.richness;el._countRAF&&cancelAnimationFrame(el._countRAF);
+    animateCount(el,target,{suffix:'%'});
+  });
+  c.querySelectorAll('.person-pct[data-pct]').forEach(el=>{
+    animateCount(el,+el.dataset.pct,{suffix:'%',duration:450});
+  });
+  renderLeaderboard();renderStats();updateWebhookPill();
+}
+
+/* Drag & drop */
+function attachDragHandlers(){
+  document.querySelectorAll('.person-pill[draggable="true"]').forEach(pill=>{
+    pill.addEventListener('dragstart',e=>{
+      pill.classList.add('dragging');
+      e.dataTransfer.setData('text/plain',JSON.stringify({pid:pill.dataset.pid,role:pill.dataset.role,evid:pill.dataset.evid}));
+      e.dataTransfer.effectAllowed='move';
+    });
+    pill.addEventListener('dragend',()=>pill.classList.remove('dragging'));
+  });
+  document.querySelectorAll('.role-col').forEach(col=>{
+    col.addEventListener('dragover',e=>{e.preventDefault();col.classList.add('drag-over');});
+    col.addEventListener('dragleave',()=>col.classList.remove('drag-over'));
+    col.addEventListener('drop',e=>{
+      e.preventDefault();col.classList.remove('drag-over');
+      let data;try{data=JSON.parse(e.dataTransfer.getData('text/plain'));}catch{return;}
+      const toEvid=col.dataset.evid,toRole=col.dataset.role;
+      if(data.evid!==toEvid)return;
+      movePerson(toEvid,data.role,data.pid,toRole);
+    });
+  });
+}
+
+/* Toolbar */
+g('eventFilter').addEventListener('input',()=>{eventFilterQuery=g('eventFilter').value.trim();render();});
+g('sortSelect').addEventListener('change',()=>{eventSort=g('sortSelect').value;render();});
+
+window.removePerson=removePerson;
+window.openAddPersonModal=openAddPersonModal;
+window.confirmDeleteEvent=confirmDeleteEvent;
+window.openAttendanceModal=openAttendanceModal;
+window.openProfileModal=openProfileModal;
+window.copyRoster=copyRoster;
+window.duplicateEvent=duplicateEvent;
+window.startEditName=startEditName;
+window.startEditDate=startEditDate;
+
+/* Logo fallback */
+const logoImgEl=g('logoImg');
+if(logoImgEl){
+  logoImgEl.addEventListener('error',()=>{
+    logoImgEl.style.display='none';
+    const fb=g('logoFallback');if(fb)fb.style.display='';
+  });
+}
+function applyLogoFromHash(){
+  const hash=window.location.hash.slice(1);
+  if(hash&&hash.startsWith('logo=')){
+    const url=decodeURIComponent(hash.slice(5));
+    const img=g('logoImg');
+    if(img){img.src=url;img.style.display='';const fb=g('logoFallback');if(fb)fb.style.display='none';}
+  }
+}
+applyLogoFromHash();
+window.addEventListener('hashchange',applyLogoFromHash);
+
+g('newEventBtn').addEventListener('click',openNewEventModal);
+loadEvents();
+</script>
+</body>
+</html>
