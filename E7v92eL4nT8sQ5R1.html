@@ -135,6 +135,8 @@ button.ghost:disabled{opacity:.4;cursor:not-allowed;}
 .icon-btn.copy-btn:hover{border-color:var(--cohost);color:var(--cohost);background:var(--cohost-dim);}
 .icon-btn.info-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);}
 .icon-btn.dup-btn:hover{border-color:var(--attendee);color:var(--attendee);background:var(--attendee-dim);}
+.icon-btn.warn-btn:hover{border-color:var(--host);color:var(--host);background:var(--host-dim);}
+.icon-btn.warn-btn.flagged{border-color:var(--danger-dim);color:var(--danger);}
 
 /* Attendance bar */
 .attendance-bar-wrap{padding:10px 19px 11px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
@@ -471,6 +473,7 @@ button.ghost:disabled{opacity:.4;cursor:not-allowed;}
         <div class="lb-list" id="lbList"></div>
         <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:9.5px;color:var(--text-muted);line-height:1.8;letter-spacing:.05em">
           H = host (3pt) &nbsp;&middot;&nbsp; C = co-host (2pt) &nbsp;&middot;&nbsp; A = attendee (1pt)<br>
+          <span style="color:var(--rank)">Division events (TAT / TRU / Mixed) award 2&times; points.</span><br>
           <span style="color:var(--text-muted);font-size:9px">Click any name to view profile</span>
         </div>
         <div class="stats-row">
@@ -521,9 +524,22 @@ const API_KEY='$2a$10$9dKNzVl1cUjZzcndX/LDp.kK8zdWOWnDTklDrWJTGZ0vGN7Jjdy6K';
 const BASE=`https://api.jsonbin.io/v3/b/${BIN_ID}`;
 const DEFAULT_LOG_WEBHOOK='https://discord.com/api/webhooks/1530968288346243275/yieo-SryJbsjR-xYDfbRVDa6w4Oi5_WCaFakQcj3XPyXWAJuk5u1AwFZ19QpPEkHQF39';
 const DEFAULT_EVENT_WEBHOOK='https://discord.com/api/webhooks/1530968508425306293/ZijwtqhkQlzxGvgpc_raKnOyn74iylZBuVo30D12570FNAnt76vPA91a2tnTbLsDgg9u';
-let state={events:[],personnel:[],webhookUrl:DEFAULT_LOG_WEBHOOK,eventWebhookUrl:DEFAULT_EVENT_WEBHOOK,adjustments:[]};
+let state={events:[],personnel:[],webhookUrl:DEFAULT_LOG_WEBHOOK,eventWebhookUrl:DEFAULT_EVENT_WEBHOOK,adjustments:[],warnings:[]};
 let eventFilterQuery='';
 let eventSort='newest';
+
+/* Points system — normal events vs division (TAT/TRU/Mixed) events, which award 2x points */
+const ROLE_POINTS={host:3,cohost:2,attendee:1};
+const DIVISION_LABELS={TAT:'TAT',TRU:'TRU',MIXED:'Mixed'};
+const DIVISION_FULL_LABELS={TAT:'Tactical Assault Team',TRU:'Tactical Rescue Unit',MIXED:'Mixed Divisions'};
+function eventMultiplier(ev){return ev&&ev.eventType==='division'?2:1;}
+function eventTypeLabel(ev){
+  if(ev&&ev.eventType==='division'){
+    const d=DIVISION_LABELS[ev.division]||'Division';
+    return `${d} Division Event`;
+  }
+  return 'Normal Event';
+}
 
 const g=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -608,7 +624,7 @@ function combinedPeoplePool(){
   return out;
 }
 
-/* Manual admin adjustments — always all-time, never counted in weekly periods */
+/* Manual admin adjustments — always all-time, never counted in weekly periods, never multiplied (not tied to a specific event) */
 function adjustmentsFor(key){
   return state.adjustments.filter(a=>a.key===key);
 }
@@ -616,22 +632,90 @@ function adjustmentTotals(key){
   const list=adjustmentsFor(key);
   return list.reduce((acc,a)=>{acc.host+=a.host||0;acc.cohost+=a.cohost||0;acc.attendee+=a.attendee||0;return acc;},{host:0,cohost:0,attendee:0});
 }
+function adjustmentPoints(a){return(a.host||0)*ROLE_POINTS.host+(a.cohost||0)*ROLE_POINTS.cohost+(a.attendee||0)*ROLE_POINTS.attendee;}
 function applyAdjustmentsToMap(map){
   for(const adj of state.adjustments){
     const key=adj.key;
-    if(!map.has(key))map.set(key,{username:adj.username,discordId:adj.discordId,key,host:0,cohost:0,attendee:0,events:new Set()});
+    if(!map.has(key))map.set(key,{username:adj.username,discordId:adj.discordId,key,host:0,cohost:0,attendee:0,points:0,events:new Set()});
     const entry=map.get(key);
     entry.host+=adj.host||0;entry.cohost+=adj.cohost||0;entry.attendee+=adj.attendee||0;
+    entry.points=(entry.points||0)+adjustmentPoints(adj);
     if(!entry.username&&adj.username)entry.username=adj.username;
     if(!entry.discordId&&adj.discordId)entry.discordId=adj.discordId;
   }
 }
 
+/* Warnings — 3-strike system. At 3/3 a person is flagged for demotion review. */
+const WARNING_LIMIT=3;
+function warningsFor(key){return state.warnings.filter(w=>w.key===key);}
+function warningCount(key){return warningsFor(key).length;}
+function isFlaggedForDemotion(key){return warningCount(key)>=WARNING_LIMIT;}
+function addWarning(key,username,discordId,reason){
+  state.warnings.push({id:uid(),key,username,discordId,reason,createdAt:new Date().toISOString()});
+  const count=warningCount(key);
+  saveEvents();render();if(activeView==='personnel')renderPersonnelPage();
+  const label=username||discordId||'This person';
+  if(count>=WARNING_LIMIT){
+    showToast(`\u26A0 ${label} hit ${count}/${WARNING_LIMIT} warnings \u2014 demotion review recommended`,true);
+    sendWebhook('remove',`\u26A0 ${label} reached ${count}/${WARNING_LIMIT} warnings \u2014 DEMOTION REVIEW RECOMMENDED${reason?` (latest: ${reason})`:''}`);
+  }else{
+    showToast(`Warning ${count}/${WARNING_LIMIT} added for ${label}${reason?`: ${reason}`:''}`);
+    sendWebhook('edit',`Warning ${count}/${WARNING_LIMIT} issued to ${label}${reason?` \u2014 ${reason}`:''}`);
+  }
+}
+function clearWarnings(key,label){
+  const had=warningsFor(key);
+  if(!had.length)return;
+  state.warnings=state.warnings.filter(w=>w.key!==key);
+  saveEvents();render();if(activeView==='personnel')renderPersonnelPage();
+  showToast(`Warnings cleared for ${label||'this person'}`,false,()=>{
+    state.warnings=state.warnings.concat(had);saveEvents();render();if(activeView==='personnel')renderPersonnelPage();
+  });
+  sendWebhook('edit',`Warnings reset for ${label||'this person'} (was ${had.length}/${WARNING_LIMIT})`);
+}
+function removeWarning(warningId){
+  const idx=state.warnings.findIndex(w=>w.id===warningId);if(idx===-1)return;
+  const removed=state.warnings[idx];
+  state.warnings.splice(idx,1);saveEvents();render();if(activeView==='personnel')renderPersonnelPage();
+  showToast('Warning removed',false,()=>{state.warnings.splice(idx,0,removed);saveEvents();render();if(activeView==='personnel')renderPersonnelPage();});
+}
+function warningPillHtml(key,size){
+  const count=warningCount(key);if(!count)return'';
+  const flagged=count>=WARNING_LIMIT;
+  const cls=size==='sm'?'sm':'';
+  const bg=flagged?'var(--danger-dim)':'var(--host-dim)';
+  const col=flagged?'var(--danger)':'var(--host)';
+  return `<span class="rank-badge ${cls}" style="background:${bg};color:${col};border-color:${bg}" title="${flagged?'Flagged for demotion review':'Warning count'}">${flagged?'\u26A0 ':''}${Math.min(count,WARNING_LIMIT)}/${WARNING_LIMIT}</span>`;
+}
+function openAddWarningModal(key,username,discordId){
+  const label=username||discordId||'this person';
+  const nextCount=warningCount(key)+1;
+  const willFlag=nextCount>=WARNING_LIMIT;
+  openModal(`
+    <h3 style="color:${willFlag?'var(--danger)':'var(--host)'}"><svg class="icon" aria-hidden="true"><use href="#i-alert-circle"></use></svg> Warn ${esc(label)}</h3>
+    <div class="field-hint" style="margin-bottom:14px">This will be warning <strong style="color:${willFlag?'var(--danger)':'var(--text)'}">${nextCount}/${WARNING_LIMIT}</strong>${willFlag?' \u2014 reaching the limit flags this person for demotion review.':'.'}</div>
+    <div class="field"><label for="warnReason">Reason (optional)</label><input id="warnReason" type="text" placeholder="e.g. missed briefing, no-show"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="cancelBtn">Cancel</button>
+      <button class="btn-confirm" id="confirmBtn" style="background:${willFlag?'var(--danger)':'var(--host)'};color:#fff">Add Warning</button>
+    </div>`,()=>{
+    g('cancelBtn').onclick=closeModal;
+    function commit(){
+      const reason=g('warnReason').value.trim();
+      closeModal();addWarning(key,username,discordId,reason);
+    }
+    g('confirmBtn').onclick=commit;
+    g('warnReason').addEventListener('keydown',e=>{if(e.key==='Enter')commit();});
+  });
+}
+window.openAddWarningModal=openAddWarningModal;
+
 function buildProfile(key){
-  const profile={username:'',discordId:'',rank:'',host:0,cohost:0,attendee:0,eventSet:new Set(),eventDetails:[],lastActive:null};
+  const profile={username:'',discordId:'',rank:'',host:0,cohost:0,attendee:0,points:0,eventSet:new Set(),eventDetails:[],lastActive:null};
   const roster=findPersonnel(key);
   if(roster){profile.username=roster.username||'';profile.discordId=roster.discordId||'';profile.rank=roster.rank||'';}
   for(const ev of state.events){
+    const mult=eventMultiplier(ev);
     for(const role of['host','cohost','attendee']){
       for(const p of(ev[role]||[])){
         const k=(p.discordId||p.username||'').toLowerCase()||p.id;
@@ -639,20 +723,22 @@ function buildProfile(key){
         if(!profile.username&&p.username)profile.username=p.username;
         if(!profile.discordId&&p.discordId)profile.discordId=p.discordId;
         profile[role]++;
+        profile.points+=ROLE_POINTS[role]*mult;
         profile.eventSet.add(ev.id);
-        profile.eventDetails.push({evId:ev.id,evName:ev.name,role,date:ev.date||ev.createdAt});
+        profile.eventDetails.push({evId:ev.id,evName:ev.name,role,date:ev.date||ev.createdAt,eventType:ev.eventType,division:ev.division,multiplier:mult});
         const d=parseEventDate(ev);
         if(d&&(!profile.lastActive||d>profile.lastActive))profile.lastActive=d;
       }
     }
   }
-  /* fold in manual admin adjustments — all-time only, doesn't touch eventCount */
+  /* fold in manual admin adjustments — all-time only, doesn't touch eventCount, not multiplied */
   const adj=adjustmentTotals(key);
   profile.host+=adj.host;profile.cohost+=adj.cohost;profile.attendee+=adj.attendee;
+  profile.points+=adj.host*ROLE_POINTS.host+adj.cohost*ROLE_POINTS.cohost+adj.attendee*ROLE_POINTS.attendee;
   if(!profile.username){const rec=state.adjustments.find(a=>a.key===key);if(rec)profile.username=rec.username||profile.username;}
   if(!profile.discordId){const rec=state.adjustments.find(a=>a.key===key);if(rec)profile.discordId=rec.discordId||profile.discordId;}
   profile.eventCount=profile.eventSet.size;
-  profile.total=profile.host*3+profile.cohost*2+profile.attendee;
+  profile.total=profile.points;
   profile.hosting=profile.host+profile.cohost;
   return profile;
 }
@@ -679,9 +765,10 @@ function activityGraphData(key){
     let pts=0;
     for(const ev of state.events){
       const d=parseEventDate(ev);if(!d||!inRange(d,wStart,wEnd))continue;
+      const mult=eventMultiplier(ev);
       for(const role of['host','cohost','attendee']){
         for(const p of(ev[role]||[])){
-          if(personKey(p)===key){pts+=role==='host'?3:role==='cohost'?2:1;break;}
+          if(personKey(p)===key){pts+=ROLE_POINTS[role]*mult;break;}
         }
       }
     }
@@ -773,6 +860,7 @@ async function loadEvents(){
     state.webhookUrl=(typeof rec?.webhookUrl==='string'&&rec.webhookUrl)?rec.webhookUrl:DEFAULT_LOG_WEBHOOK;
     state.eventWebhookUrl=(typeof rec?.eventWebhookUrl==='string'&&rec.eventWebhookUrl)?rec.eventWebhookUrl:DEFAULT_EVENT_WEBHOOK;
     state.adjustments=Array.isArray(rec?.adjustments)?rec.adjustments:[];
+    state.warnings=Array.isArray(rec?.warnings)?rec.warnings:[];
     g('statusText').textContent='operational';setStatus('ok');render();
   }catch(e){
     console.error(e);g('statusText').textContent='offline';setStatus('err');
@@ -782,7 +870,7 @@ async function loadEvents(){
 async function saveEvents(){
   setStatus('saving');g('statusText').textContent='saving...';
   try{
-    const r=await fetch(BASE,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':API_KEY},body:JSON.stringify({events:state.events,personnel:state.personnel,webhookUrl:state.webhookUrl,eventWebhookUrl:state.eventWebhookUrl,adjustments:state.adjustments})});
+    const r=await fetch(BASE,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':API_KEY},body:JSON.stringify({events:state.events,personnel:state.personnel,webhookUrl:state.webhookUrl,eventWebhookUrl:state.eventWebhookUrl,adjustments:state.adjustments,warnings:state.warnings})});
     if(!r.ok)throw new Error('HTTP '+r.status);
     g('statusText').textContent='operational';setStatus('ok');pingStatus();
   }catch(e){
@@ -826,7 +914,7 @@ async function sendProfileToWebhook(key){
   const lastActive=prof.lastActive?prof.lastActive.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}):'&mdash;';
   const recent=[...prof.eventDetails].reverse().slice(0,5);
   const recentLines=recent.length
-    ? recent.map(ev=>`\u2022 **${plainText(ev.evName)}** \u2014 ${roleCfg[ev.role]?.label||ev.role}`).join('\n')
+    ? recent.map(ev=>`\u2022 **${plainText(ev.evName)}**${ev.multiplier>1?` (${DIVISION_LABELS[ev.division]||'Div'} \u00D72)`:''} \u2014 ${roleCfg[ev.role]?.label||ev.role}`).join('\n')
     : '_No events yet_';
   const fields=[
     {name:'Total Score',value:`\`${prof.total}\` pts`,inline:true},
@@ -913,8 +1001,8 @@ async function sendEventToWebhook(eventId,imageUrl){
   ];
   const embed={
     title:ev.name,
-    description:ev.date?`Date: \`${ev.date}\``:undefined,
-    color:0x0a84ff,
+    description:[ev.date?`Date: \`${ev.date}\``:null,`Type: \`${eventTypeLabel(ev)}${eventMultiplier(ev)>1?' (2x points)':''}\``].filter(Boolean).join('\n'),
+    color:eventMultiplier(ev)>1?0xbf5af2:0x0a84ff,
     fields,
     footer:{text:'JTTF Events'},
     timestamp:new Date().toISOString()
@@ -984,12 +1072,25 @@ function renderAdminAdjList(){
   if(!state.adjustments.length){list.innerHTML=`<div style="text-align:center;padding:14px;color:var(--text-muted);font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10.5px">No manual adjustments yet.</div>`;return;}
   list.innerHTML=[...state.adjustments].reverse().map(adminAdjRowHtml).join('');
 }
+function adminWarnRowHtml(w){
+  const flagged=warningCount(w.key)>=WARNING_LIMIT;
+  return `<div class="admin-adj-row" data-wid="${w.id}">
+    <span class="aname">${esc(w.username||w.discordId||'Unknown')}${w.reason?` <span style="color:var(--text-muted)">&middot; ${esc(w.reason)}</span>`:''}</span>
+    <span class="adelta" style="${flagged?'color:var(--danger)':''}">${flagged?'\u26A0 ':''}${new Date(w.createdAt).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</span>
+    <button class="remove-x" title="Remove warning" data-act="del-warn" data-wid="${w.id}"><svg class="icon" aria-hidden="true" style="font-size:11px"><use href="#i-x"></use></svg></button>
+  </div>`;
+}
+function renderAdminWarnList(){
+  const list=g('adminWarnList');if(!list)return;
+  if(!state.warnings.length){list.innerHTML=`<div style="text-align:center;padding:14px;color:var(--text-muted);font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10.5px">No warnings on file.</div>`;return;}
+  list.innerHTML=[...state.warnings].reverse().map(adminWarnRowHtml).join('');
+}
 function openAdminPanel(){
   const existingPeople=combinedPeoplePool();
   openModal(`
     <span class="admin-badge"><svg class="icon" aria-hidden="true"><use href="#i-shield-lock"></use></svg> Admin &middot; Manual Points</span>
     <h3 style="margin-bottom:6px"><svg class="icon" style="color:var(--rank)" aria-hidden="true"><use href="#i-shield-lock"></use></svg> Adjust Personnel</h3>
-    <div class="field-hint" style="margin-bottom:14px">Adds custom host / co-host / attendee credit to a person, counted toward All-Time standings only &mdash; never This Week or Last Week.</div>
+    <div class="field-hint" style="margin-bottom:14px">Adds custom host / co-host / attendee credit to a person, counted toward All-Time standings only &mdash; never This Week or Last Week. Not affected by the division 2x multiplier.</div>
     <div class="field"><label for="adminPName">Person</label>
       <div class="field-inner"><input id="adminPName" type="text" placeholder="Search by username or ID" autocomplete="off"><div class="autocomplete-drop" id="adminAcDrop"></div></div>
     </div>
@@ -1008,7 +1109,16 @@ function openAdminPanel(){
       <button class="btn-confirm" id="confirmBtn" style="background:var(--rank);color:#fff">Apply</button>
     </div>
     <div class="profile-section-title" style="margin-top:18px">Existing adjustments</div>
-    <div class="admin-list" id="adminAdjList"></div>`,()=>{
+    <div class="admin-list" id="adminAdjList"></div>
+
+    <div class="profile-section-title" style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:6px;color:var(--host)"><svg class="icon" aria-hidden="true"><use href="#i-alert-circle"></use></svg> Warnings &mdash; 3-strike system</div>
+    <div class="field-hint" style="margin-bottom:12px">Uses the same person selected above. Reaching ${WARNING_LIMIT}/${WARNING_LIMIT} flags them for demotion review everywhere in the app.</div>
+    <div class="field"><label for="adminWarnReason">Reason (optional)</label><input id="adminWarnReason" type="text" placeholder="e.g. missed briefing"></div>
+    <div class="modal-actions">
+      <button class="btn-confirm" id="adminWarnBtn" style="background:var(--host);color:#fff;flex:1">Add Warning to Selected Person</button>
+    </div>
+    <div class="profile-section-title" style="margin-top:16px">Existing warnings</div>
+    <div class="admin-list" id="adminWarnList"></div>`,()=>{
     g('modalBox').classList.add('wide');
     g('cancelBtn').onclick=closeModal;
     renderAdminAdjList();
@@ -1059,6 +1169,22 @@ function openAdminPanel(){
       state.adjustments.splice(idx,1);saveEvents();render();renderAdminAdjList();
       showToast('Adjustment removed',false,()=>{state.adjustments.splice(idx,0,removed);saveEvents();render();renderAdminAdjList();});
     });
+
+    renderAdminWarnList();
+    g('adminWarnBtn').onclick=()=>{
+      const username=pName.value.trim(),discordId=pId.value.trim();
+      if(!username&&!discordId){showToast('Select or enter a person first.',true);return;}
+      const key=(discordId||username).toLowerCase();
+      const reason=g('adminWarnReason').value.trim();
+      addWarning(key,username,discordId,reason);
+      renderAdminWarnList();
+      g('adminWarnReason').value='';
+    };
+    g('adminWarnList').addEventListener('click',e=>{
+      const btn=e.target.closest('[data-act="del-warn"]');if(!btn)return;
+      removeWarning(btn.dataset.wid);
+      renderAdminWarnList();
+    });
   });
 }
 
@@ -1078,17 +1204,20 @@ let personnelQuery='',personnelSort='az';
 function personnelCardHtml(p){
   const key=personnelKey(p);
   const evCount=buildProfile(key).eventCount;
-  return `<div class="personnel-card" data-pkey="${esc(key)}">
+  const flagged=isFlaggedForDemotion(key);
+  return `<div class="personnel-card" data-pkey="${esc(key)}" style="${flagged?'border-color:var(--danger-dim);box-shadow:0 1px 2px rgba(0,0,0,0.3),0 6px 20px rgba(255,69,58,0.12)':''}">
     <div class="avatar">${esc(initials(p.username||p.discordId))}</div>
     <div class="personnel-card-info" data-act="view" data-pkey="${esc(key)}">
-      <div class="personnel-card-name">${esc(p.username||'Unknown')}</div>
+      <div class="personnel-card-name">${esc(p.username||'Unknown')}${flagged?' <svg class="icon" aria-hidden="true" style="color:var(--danger);font-size:13px"><use href="#i-alert-circle"></use></svg>':''}</div>
       <div class="personnel-card-meta">
         <span>${p.discordId?esc(p.discordId):'no ID'}</span>
         ${evCount?`<span class="meta-sep">&middot;</span><span>${evCount} event${evCount!==1?'s':''}</span>`:''}
       </div>
     </div>
+    ${warningPillHtml(key)}
     ${p.rank?`<span class="rank-badge">${esc(p.rank)}</span>`:`<span class="rank-badge" style="opacity:.4">no rank</span>`}
     <div class="personnel-card-actions">
+      <button class="icon-btn warn-btn${flagged?' flagged':''}" title="Add warning" data-act="warn" data-pkey="${esc(key)}"><svg class="icon" aria-hidden="true"><use href="#i-alert-circle"></use></svg></button>
       <button class="icon-btn copy-btn" title="Edit" data-act="edit" data-pkey="${esc(key)}"><svg class="icon" aria-hidden="true"><use href="#i-pencil"></use></svg></button>
       <button class="icon-btn info-btn" title="View profile" data-act="view" data-pkey="${esc(key)}"><svg class="icon" aria-hidden="true"><use href="#i-id-badge-2"></use></svg></button>
       <button class="icon-btn" title="Remove from roster" data-act="del" data-pkey="${esc(key)}"><svg class="icon" aria-hidden="true"><use href="#i-trash"></use></svg></button>
@@ -1125,6 +1254,10 @@ function handlePersonnelAction(e){
   const key=btn.dataset.pkey,act=btn.dataset.act;
   if(act==='view')openProfileModal(key);
   else if(act==='edit')openEditPersonnelModal(key);
+  else if(act==='warn'){
+    const rec=findPersonnel(key);
+    openAddWarningModal(key,rec?.username,rec?.discordId);
+  }
   else if(act==='del'){
     const idx=state.personnel.findIndex(p=>personnelKey(p)===key);if(idx===-1)return;
     const removed=state.personnel[idx];
@@ -1186,17 +1319,37 @@ function openNewEventModal(){
     <h3><svg class="icon" style="color:var(--accent)" aria-hidden="true"><use href="#i-calendar-plus"></use></svg> New Event</h3>
     <div class="field"><label for="evName">Event name</label><input id="evName" type="text" placeholder="e.g. Friday Game Night"></div>
     <div class="field"><label for="evDate">Date</label><input id="evDate" type="text" value="${todayStr()}" placeholder="YYYY-MM-DD"></div>
+    <div class="field"><label for="evType">Event type</label>
+      <select id="evType" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:9px 12px;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',sans-serif;font-size:13px">
+        <option value="normal">Normal Event</option>
+        <option value="division">Division Event (2&times; points)</option>
+      </select>
+    </div>
+    <div class="field" id="evDivisionField" style="display:none">
+      <label for="evDivision">Division</label>
+      <select id="evDivision" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:9px 12px;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',sans-serif;font-size:13px">
+        <option value="TAT">TAT &mdash; Tactical Assault Team</option>
+        <option value="TRU">TRU &mdash; Tactical Rescue Unit</option>
+        <option value="MIXED">Mixed Divisions</option>
+      </select>
+      <div class="field-hint">Host = 6pt, Co-Host = 4pt, Attendee = 2pt for this event (2&times; normal).</div>
+    </div>
     <div class="modal-actions">
       <button class="btn-secondary" id="cancelBtn">Cancel</button>
       <button class="btn-confirm" id="confirmBtn" style="background:var(--accent);color:#fff">Create</button>
     </div>`,()=>{
     g('cancelBtn').onclick=closeModal;
+    const typeSel=g('evType'),divField=g('evDivisionField');
+    typeSel.addEventListener('change',()=>{divField.style.display=typeSel.value==='division'?'':'none';});
     g('confirmBtn').onclick=()=>{
       const name=g('evName').value.trim();if(!name){showToast('Give the event a name.',true);return;}
       const date=g('evDate').value.trim();
-      const ev={id:uid(),name,date,createdAt:new Date().toISOString(),host:[],cohost:[],attendee:[]};
+      const eventType=typeSel.value==='division'?'division':'normal';
+      const division=eventType==='division'?g('evDivision').value:null;
+      const ev={id:uid(),name,date,createdAt:new Date().toISOString(),eventType,division,host:[],cohost:[],attendee:[]};
       state.events.unshift(ev);closeModal();persist();
-      sendWebhook('create',`Created event ${name}${date?` (${date})`:''}`);
+      const typeNote=eventType==='division'?` \u2014 ${eventTypeLabel(ev)} (2x points)`:'';
+      sendWebhook('create',`Created event ${name}${date?` (${date})`:''}${typeNote}`);
     };
     g('evName').addEventListener('keydown',e=>{if(e.key==='Enter')g('confirmBtn').click();});
   });
@@ -1289,6 +1442,7 @@ function duplicateEvent(eventId){
   const ev=state.events.find(e=>e.id===eventId);if(!ev)return;
   const copy={
     id:uid(),name:ev.name+' (copy)',date:todayStr(),createdAt:new Date().toISOString(),
+    eventType:ev.eventType||'normal',division:ev.division||null,
     host:(ev.host||[]).map(p=>({...p,id:uid()})),
     cohost:(ev.cohost||[]).map(p=>({...p,id:uid()})),
     attendee:(ev.attendee||[]).map(p=>({...p,id:uid()}))
@@ -1333,19 +1487,61 @@ function startEditDate(eventId){
   input.addEventListener('blur',commit);
 }
 
+/* Inline edit: event type / division */
+function startEditType(eventId){
+  const ev=state.events.find(e=>e.id===eventId);if(!ev)return;
+  openModal(`
+    <h3><svg class="icon" style="color:var(--rank)" aria-hidden="true"><use href="#i-shield-lock"></use></svg> Event Type &mdash; ${esc(ev.name)}</h3>
+    <div class="field"><label for="editEvType">Event type</label>
+      <select id="editEvType" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:9px 12px;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',sans-serif;font-size:13px">
+        <option value="normal">Normal Event</option>
+        <option value="division">Division Event (2&times; points)</option>
+      </select>
+    </div>
+    <div class="field" id="editEvDivisionField" style="display:none">
+      <label for="editEvDivision">Division</label>
+      <select id="editEvDivision" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:9px 12px;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',sans-serif;font-size:13px">
+        <option value="TAT">TAT &mdash; Tactical Assault Team</option>
+        <option value="TRU">TRU &mdash; Tactical Rescue Unit</option>
+        <option value="MIXED">Mixed Divisions</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="cancelBtn">Cancel</button>
+      <button class="btn-confirm" id="confirmBtn" style="background:var(--rank);color:#fff">Save</button>
+    </div>`,()=>{
+    g('cancelBtn').onclick=closeModal;
+    const typeSel=g('editEvType'),divField=g('editEvDivisionField'),divSel=g('editEvDivision');
+    typeSel.value=ev.eventType==='division'?'division':'normal';
+    divSel.value=ev.division||'TAT';
+    divField.style.display=typeSel.value==='division'?'':'none';
+    typeSel.addEventListener('change',()=>{divField.style.display=typeSel.value==='division'?'':'none';});
+    g('confirmBtn').onclick=()=>{
+      const oldLabel=eventTypeLabel(ev);
+      ev.eventType=typeSel.value==='division'?'division':'normal';
+      ev.division=ev.eventType==='division'?divSel.value:null;
+      closeModal();persist();
+      sendWebhook('edit',`Changed type of ${ev.name} from ${oldLabel} to ${eventTypeLabel(ev)}`);
+      showToast(`${ev.name} is now a ${eventTypeLabel(ev)}`);
+    };
+  });
+}
+window.startEditType=startEditType;
+
 /* Attendance modal */
 function openAttendanceModal(eventId){
   const ev=state.events.find(e=>e.id===eventId);if(!ev)return;
   const h=ev.host?.length||0,c=ev.cohost?.length||0,a=ev.attendee?.length||0;
-  const total=h+c+a;const score=h*3+c*2+a;const maxScore=total*3||1;
+  const total=h+c+a;const mult=eventMultiplier(ev);const score=(h*3+c*2+a)*mult;const maxScore=(total*3*mult)||1;
   const richness=total?Math.round((score/maxScore)*100):0;
   const pctColor=richness>=75?'var(--attendee)':richness>=40?'var(--accent)':'var(--danger)';
   openModal(`
     <h3><svg class="icon" style="color:var(--accent)" aria-hidden="true"><use href="#i-chart-pie"></use></svg> Attendance &mdash; ${esc(ev.name)}</h3>
+    ${mult>1?`<div style="margin-bottom:12px"><span class="rank-badge">${esc(eventTypeLabel(ev))} &middot; 2&times; points</span></div>`:''}
     <div class="att-insight">
       <div class="att-insight-head">Participation richness</div>
       <div class="att-big" style="color:${pctColor}">${richness}%</div>
-      <div class="att-sub">${total} total &middot; weighted ${score}/${maxScore}</div>
+      <div class="att-sub">${total} total &middot; weighted ${score}/${maxScore}${mult>1?' (2x applied)':''}</div>
       <div class="att-breakdown-row">
         ${h?`<div class="att-bk-item"><div class="att-bk-dot" style="background:var(--host)"></div><span style="color:var(--host)">${h} host${h!==1?'s':''}</span></div>`:''}
         ${c?`<div class="att-bk-item"><div class="att-bk-dot" style="background:var(--cohost)"></div><span style="color:var(--cohost)">${c} co-host${c!==1?'s':''}</span></div>`:''}
@@ -1354,13 +1550,13 @@ function openAttendanceModal(eventId){
       </div>
     </div>
     <div style="margin-top:14px;">
-      <div class="profile-section-title" style="margin-bottom:8px">Role breakdown</div>
-      ${[['host',h,'var(--host)','Host'],['cohost',c,'var(--cohost)','Co-Host'],['attendee',a,'var(--attendee)','Attendee']].map(([,cnt,col,lbl])=>`
+      <div class="profile-section-title" style="margin-bottom:8px">Role breakdown ${mult>1?'(points shown at 2x)':''}</div>
+      ${[['host',h,'var(--host)','Host',ROLE_POINTS.host*mult],['cohost',c,'var(--cohost)','Co-Host',ROLE_POINTS.cohost*mult],['attendee',a,'var(--attendee)','Attendee',ROLE_POINTS.attendee*mult]].map(([,cnt,col,lbl,pts])=>`
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
           <span style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:11px;color:${col};width:68px;flex-shrink:0">${lbl}</span>
           <div style="flex:1;height:6px;background:var(--surface-raised);border-radius:999px;overflow:hidden;border:1px solid var(--border)"><div style="height:100%;width:${total?Math.round((cnt/total)*100):0}%;background:${col};border-radius:999px"></div></div>
           <span style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:11px;color:var(--text);min-width:26px;text-align:right">${cnt}</span>
-          <span style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10px;color:var(--text-muted);min-width:32px">${total?Math.round((cnt/total)*100):0}%</span>
+          <span style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10px;color:var(--text-muted);min-width:52px">${pts}pt each</span>
         </div>`).join('')}
     </div>
     <div class="modal-actions"><button class="btn-confirm" id="confirmBtn" style="background:var(--accent);color:#fff">Done</button></div>`,
@@ -1396,10 +1592,26 @@ function openProfileModal(key){
   const recentHtml=recent.map(ev=>{
     const rc={host:'var(--host)',cohost:'var(--cohost)',attendee:'var(--attendee)'};
     return `<div class="profile-meta-row">
-      <span class="profile-meta-key">${esc(ev.evName)}</span>
+      <span class="profile-meta-key">${esc(ev.evName)}${ev.multiplier>1?` <span style="color:var(--rank)">&middot; ${esc(DIVISION_LABELS[ev.division]||'Div')} 2&times;</span>`:''}</span>
       <span style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10px;padding:2px 7px;border-radius:2px;background:${rc[ev.role]}14;color:${rc[ev.role]}">${ev.role}</span>
     </div>`;
   }).join('');
+
+  const warnList=warningsFor(key);
+  const warnCount=warnList.length;
+  const flagged=warnCount>=WARNING_LIMIT;
+  const warnHtml=`<div style="margin-top:14px;">
+    <div class="profile-section-title" style="margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+      <span>Warnings</span>
+      ${warnCount?warningPillHtml(key):''}
+    </div>
+    ${flagged?`<div style="background:var(--danger-dim);border:1px solid var(--danger-dim);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:10px;display:flex;align-items:center;gap:8px;color:var(--danger);font-size:12px;font-weight:600"><svg class="icon" aria-hidden="true"><use href="#i-alert-circle"></use></svg> ${WARNING_LIMIT}/${WARNING_LIMIT} \u2014 flagged for demotion review</div>`:''}
+    ${warnList.length?warnList.map(w=>`<div class="profile-meta-row"><span class="profile-meta-key">${esc(w.reason||'No reason given')}</span><span class="profile-meta-val" style="font-size:10px;color:var(--text-muted);font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace">${new Date(w.createdAt).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</span></div>`).join(''):`<div style="font-size:11px;color:var(--text-muted);font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace">No warnings on file.</div>`}
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn-secondary" id="addWarnBtn" style="border-color:var(--host-dim);color:var(--host)"><svg class="icon" aria-hidden="true"><use href="#i-alert-circle"></use></svg> Add Warning</button>
+      ${warnCount?`<button class="btn-secondary" id="clearWarnBtn" style="border-color:var(--border-light)">Clear</button>`:''}
+    </div>
+  </div>`;
 
   const key2=key;
   const adjList=adjustmentsFor(key2);
@@ -1420,6 +1632,7 @@ function openProfileModal(key){
         <span class="profile-role-badge" style="background:${roleColor}14;color:${roleColor}"><svg class="icon" aria-hidden="true" style="font-size:9px"><use href="#i-star"></use></svg> ${lastRole}</span>
         ${prof.rank?`<span class="rank-badge" style="margin-left:5px">${esc(prof.rank)}</span>`:''}
         ${streak>=2?`<span class="profile-role-badge" style="background:var(--host-dim);color:var(--host);margin-left:5px"><svg class="icon" aria-hidden="true" style="font-size:9px"><use href="#i-flame"></use></svg> ${streak} streak</span>`:''}
+        ${warnCount?`<span style="margin-left:5px">${warningPillHtml(key)}</span>`:''}
       </div>
     </div>
 
@@ -1447,6 +1660,7 @@ function openProfileModal(key){
 
     ${recent.length?`<div style="margin-top:14px;"><div class="profile-section-title" style="margin-bottom:8px">Recent events</div>${recentHtml}</div>`:''}
     ${adjHtml}
+    ${warnHtml}
 
     <div class="modal-actions">
       <button class="btn-secondary" id="shareBtn" title="${state.webhookUrl?'Send these stats to the configured Discord webhook':'No webhook configured'}"><svg class="icon" aria-hidden="true"><use href="#i-brand-discord"></use></svg> Share</button>
@@ -1454,6 +1668,10 @@ function openProfileModal(key){
     </div>`,
   ()=>{
     g('confirmBtn').onclick=closeModal;
+    const addWarnBtn=g('addWarnBtn');
+    if(addWarnBtn)addWarnBtn.addEventListener('click',()=>{closeModal();openAddWarningModal(key,prof.username,prof.discordId);});
+    const clearWarnBtn=g('clearWarnBtn');
+    if(clearWarnBtn)clearWarnBtn.addEventListener('click',()=>{closeModal();clearWarnings(key,name);});
     const shareBtn=g('shareBtn');
     if(shareBtn){
       shareBtn.addEventListener('click',async()=>{
@@ -1511,6 +1729,7 @@ function movePerson(eventId,fromRole,personId,toRole){
 function copyRoster(eventId){
   const ev=state.events.find(e=>e.id===eventId);if(!ev)return;
   const lines=[`# ${ev.name}`];
+  if(eventMultiplier(ev)>1)lines.push(`_${eventTypeLabel(ev)} \u2014 2x points_`);
   for(const role of['host','cohost','attendee']){
     const arr=ev[role]||[];if(!arr.length)continue;
     lines.push(`\n**${roleCfg[role].label}**`);
@@ -1536,18 +1755,20 @@ g('exportCsvBtn').addEventListener('click',exportLeaderboardCsv);
 function leaderboardData(eventsSubset,includeAdjustments){
   const map=new Map();
   for(const ev of eventsSubset){
+    const mult=eventMultiplier(ev);
     for(const role of['host','cohost','attendee']){
       for(const p of(ev[role]||[])){
         const key=personKey(p);
-        if(!map.has(key))map.set(key,{username:p.username,discordId:p.discordId,key,host:0,cohost:0,attendee:0,events:new Set()});
+        if(!map.has(key))map.set(key,{username:p.username,discordId:p.discordId,key,host:0,cohost:0,attendee:0,points:0,events:new Set()});
         const entry=map.get(key);entry[role]++;entry.events.add(ev.id);
+        entry.points=(entry.points||0)+ROLE_POINTS[role]*mult;
         if(!entry.username&&p.username)entry.username=p.username;
         if(!entry.discordId&&p.discordId)entry.discordId=p.discordId;
       }
     }
   }
   if(includeAdjustments)applyAdjustmentsToMap(map);
-  return [...map.values()].map(e=>({...e,eventCount:e.events.size,hosting:e.host+e.cohost,total:e.host*3+e.cohost*2+e.attendee}));
+  return [...map.values()].map(e=>({...e,eventCount:e.events.size,hosting:e.host+e.cohost,total:e.points}));
 }
 function overallPlacement(key){
   const ranked=leaderboardData(state.events,true).filter(e=>e.total>0).sort((a,b)=>b.total-a.total);
@@ -1651,6 +1872,7 @@ function personPillHtml(p,role,eventId){
       <div class="avatar">${esc(initials(name))}</div>
       <span class="person-name">${esc(name)}</span>
       ${rank?`<span class="rank-badge sm">${esc(rank)}</span>`:''}
+      ${warningPillHtml(key,'sm')}
       ${pct!==null?`<span class="person-pct ${pctClass}" data-pct="${pct}">${pct}%</span>`:''}
     </div>
     <button class="remove-x" title="Remove" onclick="removePerson('${eventId}','${role}','${p.id}')"><svg class="icon" aria-hidden="true" style="font-size:11px"><use href="#i-x"></use></svg></button>
@@ -1669,7 +1891,8 @@ function roleColHtml(ev,role){
 function attendanceBarHtml(ev){
   const h=ev.host?.length||0,c=ev.cohost?.length||0,a=ev.attendee?.length||0;
   const total=h+c+a;if(!total)return '';
-  const score=h*3+c*2+a;const maxScore=total*3;
+  const mult=eventMultiplier(ev);
+  const score=(h*3+c*2+a)*mult;const maxScore=total*3*mult;
   const richness=Math.round((score/maxScore)*100);
   const fillClass=richness>=75?'high':richness<35?'low':'';
   const col=richness>=75?'color:var(--attendee)':richness<35?'color:var(--danger)':'';
@@ -1683,17 +1906,19 @@ function attendanceBarHtml(ev){
 
 function eventCardHtml(ev){
   const h=ev.host?.length||0,c=ev.cohost?.length||0,a=ev.attendee?.length||0,tot=h+c+a;
+  const isDiv=eventMultiplier(ev)>1;
   return `<div class="event-card" data-evid="${ev.id}">
     <div class="event-head">
       <div class="event-head-left">
-        <div class="event-icon"><svg class="icon" aria-hidden="true"><use href="#i-target"></use></svg></div>
+        <div class="event-icon" style="${isDiv?'color:var(--rank)':''}"><svg class="icon" aria-hidden="true"><use href="#i-target"></use></svg></div>
         <div class="event-name-row">
           <div class="event-name" title="Click to rename" onclick="startEditName('${ev.id}')">${esc(ev.name)}</div>
-          <div class="event-meta">${ev.date?`<span class="event-date-edit" title="Click to change date" onclick="startEditDate('${ev.id}')">${esc(ev.date)}</span><span class="meta-sep">&middot;</span>`:`<span class="event-date-edit" title="Click to set date" onclick="startEditDate('${ev.id}')">+ date</span><span class="meta-sep">&middot;</span>`}<span>${tot} personnel</span></div>
+          <div class="event-meta">${ev.date?`<span class="event-date-edit" title="Click to change date" onclick="startEditDate('${ev.id}')">${esc(ev.date)}</span><span class="meta-sep">&middot;</span>`:`<span class="event-date-edit" title="Click to set date" onclick="startEditDate('${ev.id}')">+ date</span><span class="meta-sep">&middot;</span>`}<span>${tot} personnel</span><span class="meta-sep">&middot;</span><span class="event-date-edit" title="Click to change event type" onclick="startEditType('${ev.id}')" style="${isDiv?'color:var(--rank)':''}">${esc(eventTypeLabel(ev))}</span></div>
         </div>
       </div>
       <div class="event-head-right">
         <div class="count-pills">
+          ${isDiv?`<span class="count-pill" style="background:var(--rank-dim);color:var(--rank);border-color:var(--rank-dim)" title="${esc(DIVISION_FULL_LABELS[ev.division]||'Division Event')}">${esc(DIVISION_LABELS[ev.division]||'DIV')} &middot; 2x</span>`:''}
           ${h?`<span class="count-pill h">${h}H</span>`:''}
           ${c?`<span class="count-pill c">${c}C</span>`:''}
           ${a?`<span class="count-pill a">${a}A</span>`:''}
@@ -1806,4 +2031,4 @@ g('newEventBtn').addEventListener('click',openNewEventModal);
 loadEvents();
 </script>
 </body>
-</html>
+</html> 
