@@ -710,32 +710,10 @@ function openAddWarningModal(key,username,discordId){
 }
 window.openAddWarningModal=openAddWarningModal;
 
-async function fetchDiscordProfile(discordId) {
-  if (!discordId) return null;
-
-  try {
-    const res = await fetch(
-      `/api/discord/${encodeURIComponent(discordId)}`
-    );
-
-    if (!res.ok) return null;
-
-    return await res.json();
-  } catch (err) {
-    console.error("Discord lookup failed:", err);
-    return null;
-  }
-}
-  
 function buildProfile(key){
-  const profile={username:'',discordId:'',avatar:null,rank:'',host:0,cohost:0,attendee:0,points:0,eventSet:new Set(),eventDetails:[],lastActive:null};
+  const profile={username:'',discordId:'',rank:'',host:0,cohost:0,attendee:0,points:0,eventSet:new Set(),eventDetails:[],lastActive:null};
   const roster=findPersonnel(key);
- if(roster){
-  profile.username=roster.username||'';
-  profile.discordId=roster.discordId||'';
-  profile.avatar=roster.avatar||null;
-  profile.rank=roster.rank||'';
-}
+  if(roster){profile.username=roster.username||'';profile.discordId=roster.discordId||'';profile.rank=roster.rank||'';}
   for(const ev of state.events){
     const mult=eventMultiplier(ev);
     for(const role of['host','cohost','attendee']){
@@ -1586,57 +1564,10 @@ function openAttendanceModal(eventId){
 }
 
 /* Profile modal */
-/* Profile modal */
-async function openProfileModal(key){
-
-  /* Get latest Discord information */
-  const roster = findPersonnel(key);
-
-  if(roster?.discordId){
-    try{
-      const response = await fetch(
-        `/api/discord/${encodeURIComponent(roster.discordId)}`
-      );
-
-      if(response.ok){
-        const discord = await response.json();
-
-        roster.username =
-          discord.global_name ||
-          discord.username ||
-          roster.username ||
-          '';
-
-        roster.discordUsername =
-          discord.username ||
-          roster.discordUsername ||
-          '';
-
-        roster.avatar =
-          discord.avatar_url ||
-          roster.avatar ||
-          null;
-
-        await saveEvents();
-        renderPersonnelPage();
-      }
-    }catch(err){
-      console.error('Discord profile lookup failed:',err);
-    }
-  }
-
+function openProfileModal(key){
   const prof=buildProfile(key);
-
-  /* Make Discord avatar available to the profile */
-  prof.avatar=roster?.avatar||null;
-
-  if(!prof.eventCount&&!prof.username&&!prof.discordId&&!prof.host&&!prof.cohost&&!prof.attendee){
-    showToast('No data for this person.',true);
-    return;
-  }
-
+  if(!prof.eventCount&&!prof.username&&!prof.discordId&&!prof.host&&!prof.cohost&&!prof.attendee){showToast('No data for this person.',true);return;}
   const name=prof.username||prof.discordId||'Unknown';
-
   const totalEvents=state.events.length;
   const pct=totalEvents?Math.round((prof.eventCount/totalEvents)*100):0;
   const pctColor=pct>=75?'var(--attendee)':pct>=40?'var(--accent)':'var(--danger)';
@@ -1651,414 +1582,118 @@ async function openProfileModal(key){
     const pct=Math.round((w.pts/maxPts)*100);
     const isRecent=(i===weeks.length-1);
     const col=isRecent?'var(--accent)':w.pts>0?'var(--border-light)':'var(--surface-raised)';
-
     return `<div class="activity-bar" style="height:${Math.max(pct,4)}%;background:${col}">
       <div class="activity-bar-tooltip">${w.label}: ${w.pts}pt</div>
     </div>`;
   }).join('');
-
-  const weekLabels=weeks.map((w,i)=>
-    `<div class="activity-week-label">${i===weeks.length-1?'now':i===0?w.label:''}</div>`
-  ).join('');
+  const weekLabels=weeks.map((w,i)=>`<div class="activity-week-label">${i===weeks.length-1?'now':i===0?w.label:''}</div>`).join('');
 
   const recent=[...prof.eventDetails].reverse().slice(0,5);
-
   const recentHtml=recent.map(ev=>{
-    const rc={
-      host:'var(--host)',
-      cohost:'var(--cohost)',
-      attendee:'var(--attendee)'
-    };
-
+    const rc={host:'var(--host)',cohost:'var(--cohost)',attendee:'var(--attendee)'};
     return `<div class="profile-meta-row">
-      <span class="profile-meta-key">
-        ${esc(ev.evName)}
-        ${ev.multiplier>1
-          ? ` <span style="color:var(--rank)">&middot; ${esc(DIVISION_LABELS[ev.division]||'Div')} 2&times;</span>`
-          : ''
-        }
-      </span>
-      <span style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10px;padding:2px 7px;border-radius:2px;background:${rc[ev.role]}14;color:${rc[ev.role]}">
-        ${ev.role}
-      </span>
+      <span class="profile-meta-key">${esc(ev.evName)}${ev.multiplier>1?` <span style="color:var(--rank)">&middot; ${esc(DIVISION_LABELS[ev.division]||'Div')} 2&times;</span>`:''}</span>
+      <span style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10px;padding:2px 7px;border-radius:2px;background:${rc[ev.role]}14;color:${rc[ev.role]}">${ev.role}</span>
     </div>`;
   }).join('');
 
   const warnList=warningsFor(key);
   const warnCount=warnList.length;
   const flagged=warnCount>=WARNING_LIMIT;
-
   const warnHtml=`<div style="margin-top:14px;">
     <div class="profile-section-title" style="margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
       <span>Warnings</span>
       ${warnCount?warningPillHtml(key):''}
     </div>
-
-    ${flagged
-      ? `<div style="background:var(--danger-dim);border:1px solid var(--danger-dim);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:10px;display:flex;align-items:center;gap:8px;color:var(--danger);font-size:12px;font-weight:600">
-          <svg class="icon" aria-hidden="true"><use href="#i-alert-circle"></use></svg>
-          ${WARNING_LIMIT}/${WARNING_LIMIT} — flagged for demotion review
-        </div>`
-      : ''
-    }
-
-    ${warnList.length
-      ? warnList.map(w=>`
-          <div class="profile-meta-row">
-            <span class="profile-meta-key">${esc(w.reason||'No reason given')}</span>
-            <span class="profile-meta-val" style="font-size:10px;color:var(--text-muted);font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace">
-              ${new Date(w.createdAt).toLocaleDateString(undefined,{month:'short',day:'numeric'})}
-            </span>
-          </div>
-        `).join('')
-      : `<div style="font-size:11px;color:var(--text-muted);font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace">
-          No warnings on file.
-        </div>`
-    }
-
+    ${flagged?`<div style="background:var(--danger-dim);border:1px solid var(--danger-dim);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:10px;display:flex;align-items:center;gap:8px;color:var(--danger);font-size:12px;font-weight:600"><svg class="icon" aria-hidden="true"><use href="#i-alert-circle"></use></svg> ${WARNING_LIMIT}/${WARNING_LIMIT} \u2014 flagged for demotion review</div>`:''}
+    ${warnList.length?warnList.map(w=>`<div class="profile-meta-row"><span class="profile-meta-key">${esc(w.reason||'No reason given')}</span><span class="profile-meta-val" style="font-size:10px;color:var(--text-muted);font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace">${new Date(w.createdAt).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</span></div>`).join(''):`<div style="font-size:11px;color:var(--text-muted);font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace">No warnings on file.</div>`}
     <div style="display:flex;gap:8px;margin-top:10px">
-      <button class="btn-secondary" id="addWarnBtn" style="border-color:var(--host-dim);color:var(--host)">
-        <svg class="icon" aria-hidden="true"><use href="#i-alert-circle"></use></svg>
-        Add Warning
-      </button>
-
-      ${warnCount
-        ? `<button class="btn-secondary" id="clearWarnBtn" style="border-color:var(--border-light)">Clear</button>`
-        : ''
-      }
+      <button class="btn-secondary" id="addWarnBtn" style="border-color:var(--host-dim);color:var(--host)"><svg class="icon" aria-hidden="true"><use href="#i-alert-circle"></use></svg> Add Warning</button>
+      ${warnCount?`<button class="btn-secondary" id="clearWarnBtn" style="border-color:var(--border-light)">Clear</button>`:''}
     </div>
   </div>`;
 
   const key2=key;
   const adjList=adjustmentsFor(key2);
-
-  const adjHtml=adjList.length
-    ? `<div style="margin-top:14px;">
-        <div class="profile-section-title" style="margin-bottom:8px">Manual adjustments</div>
-        ${adjList.map(a=>{
-          const parts=[];
-
-          if(a.host)
-            parts.push(`<span style="color:var(--host)">${a.host>0?'+':''}${a.host}H</span>`);
-
-          if(a.cohost)
-            parts.push(`<span style="color:var(--cohost)">${a.cohost>0?'+':''}${a.cohost}C</span>`);
-
-          if(a.attendee)
-            parts.push(`<span style="color:var(--attendee)">${a.attendee>0?'+':''}${a.attendee}A</span>`);
-
-          return `<div class="profile-meta-row">
-            <span class="profile-meta-key">${esc(a.note||'Manual adjustment')}</span>
-            <span style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10.5px">
-              ${parts.join(' ')}
-            </span>
-          </div>`;
-        }).join('')}
-      </div>`
-    : '';
+  const adjHtml=adjList.length?`<div style="margin-top:14px;"><div class="profile-section-title" style="margin-bottom:8px">Manual adjustments</div>${adjList.map(a=>{
+    const parts=[];
+    if(a.host)parts.push(`<span style="color:var(--host)">${a.host>0?'+':''}${a.host}H</span>`);
+    if(a.cohost)parts.push(`<span style="color:var(--cohost)">${a.cohost>0?'+':''}${a.cohost}C</span>`);
+    if(a.attendee)parts.push(`<span style="color:var(--attendee)">${a.attendee>0?'+':''}${a.attendee}A</span>`);
+    return `<div class="profile-meta-row"><span class="profile-meta-key">${esc(a.note||'Manual adjustment')}</span><span style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10.5px">${parts.join(' ')}</span></div>`;
+  }).join('')}</div>`:'';
 
   openModal(`
     <div class="profile-header">
-
-     ${prof.avatar
-  ? `<img
-       class="profile-avatar-lg"
-       src="${esc(prof.avatar)}"
-       alt=""
-       style="object-fit:cover;border-color:${roleColor}40"
-     >`
-  : `<div
-       class="profile-avatar-lg"
-       style="background:${roleColor}18;color:${roleColor};border-color:${roleColor}40"
-     >
-       ${esc(initials(name))}
-     </div>`
-}
-
+      <div class="profile-avatar-lg" style="background:${roleColor}18;color:${roleColor};border-color:${roleColor}40">${esc(initials(name))}</div>
       <div>
         <div class="profile-name">${esc(name)}</div>
-
-        ${prof.discordId
-          ? `<div class="profile-id">
-              <svg class="icon" aria-hidden="true">
-                <use href="#i-brand-discord"></use>
-              </svg>
-              ${esc(prof.discordId)}
-            </div>`
-          : ''
-        }
-
-        <span class="profile-role-badge" style="background:${roleColor}14;color:${roleColor}">
-          <svg class="icon" aria-hidden="true" style="font-size:9px">
-            <use href="#i-star"></use>
-          </svg>
-          ${lastRole}
-        </span>
-
-        ${prof.rank
-          ? `<span class="rank-badge" style="margin-left:5px">${esc(prof.rank)}</span>`
-          : ''
-        }
-
-        ${streak>=2
-          ? `<span class="profile-role-badge" style="background:var(--host-dim);color:var(--host);margin-left:5px">
-              <svg class="icon" aria-hidden="true" style="font-size:9px">
-                <use href="#i-flame"></use>
-              </svg>
-              ${streak} streak
-            </span>`
-          : ''
-        }
-
-        ${warnCount
-          ? `<span style="margin-left:5px">${warningPillHtml(key)}</span>`
-          : ''
-        }
+        ${prof.discordId?`<div class="profile-id"><svg class="icon" aria-hidden="true"><use href="#i-brand-discord"></use></svg> ${esc(prof.discordId)}</div>`:''}
+        <span class="profile-role-badge" style="background:${roleColor}14;color:${roleColor}"><svg class="icon" aria-hidden="true" style="font-size:9px"><use href="#i-star"></use></svg> ${lastRole}</span>
+        ${prof.rank?`<span class="rank-badge" style="margin-left:5px">${esc(prof.rank)}</span>`:''}
+        ${streak>=2?`<span class="profile-role-badge" style="background:var(--host-dim);color:var(--host);margin-left:5px"><svg class="icon" aria-hidden="true" style="font-size:9px"><use href="#i-flame"></use></svg> ${streak} streak</span>`:''}
+        ${warnCount?`<span style="margin-left:5px">${warningPillHtml(key)}</span>`:''}
       </div>
     </div>
 
     <div class="profile-stats-grid">
-      <div class="profile-stat">
-        <div class="profile-stat-val">${prof.total}</div>
-        <div class="profile-stat-lbl">Total Score</div>
-      </div>
-
-      <div class="profile-stat">
-        <div class="profile-stat-val">${prof.eventCount}</div>
-        <div class="profile-stat-lbl">Events</div>
-      </div>
-
-      <div class="profile-stat">
-        <div class="profile-stat-val" style="color:${pctColor}">${pct}%</div>
-        <div class="profile-stat-lbl">Attendance</div>
-      </div>
+      <div class="profile-stat"><div class="profile-stat-val">${prof.total}</div><div class="profile-stat-lbl">Total Score</div></div>
+      <div class="profile-stat"><div class="profile-stat-val">${prof.eventCount}</div><div class="profile-stat-lbl">Events</div></div>
+      <div class="profile-stat"><div class="profile-stat-val" style="color:${pctColor}">${pct}%</div><div class="profile-stat-lbl">Attendance</div></div>
     </div>
 
     <div class="profile-section-title">Role breakdown</div>
-
     <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-
-      ${prof.host
-        ? `<div style="flex:1;background:var(--host-dim);border:1px solid var(--host-dim);border-radius:var(--r-sm);padding:8px;text-align:center;min-width:70px">
-            <div style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:16px;font-weight:600;color:var(--host)">
-              ${prof.host}
-            </div>
-            <div style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:9px;color:var(--text-muted);margin-top:2px;text-transform:uppercase;letter-spacing:.06em">
-              Host
-            </div>
-          </div>`
-        : ''
-      }
-
-      ${prof.cohost
-        ? `<div style="flex:1;background:var(--cohost-dim);border:1px solid var(--cohost-dim);border-radius:var(--r-sm);padding:8px;text-align:center;min-width:70px">
-            <div style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:16px;font-weight:600;color:var(--cohost)">
-              ${prof.cohost}
-            </div>
-            <div style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:9px;color:var(--text-muted);margin-top:2px;text-transform:uppercase;letter-spacing:.06em">
-              Co-Host
-            </div>
-          </div>`
-        : ''
-      }
-
-      ${prof.attendee
-        ? `<div style="flex:1;background:var(--attendee-dim);border:1px solid var(--attendee-dim);border-radius:var(--r-sm);padding:8px;text-align:center;min-width:70px">
-            <div style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:16px;font-weight:600;color:var(--attendee)">
-              ${prof.attendee}
-            </div>
-            <div style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:9px;color:var(--text-muted);margin-top:2px;text-transform:uppercase;letter-spacing:.06em">
-              Attendee
-            </div>
-          </div>`
-        : ''
-      }
-
+      ${prof.host?`<div style="flex:1;background:var(--host-dim);border:1px solid var(--host-dim);border-radius:var(--r-sm);padding:8px;text-align:center;min-width:70px"><div style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:16px;font-weight:600;color:var(--host)">${prof.host}</div><div style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:9px;color:var(--text-muted);margin-top:2px;text-transform:uppercase;letter-spacing:.06em">Host</div></div>`:''}
+      ${prof.cohost?`<div style="flex:1;background:var(--cohost-dim);border:1px solid var(--cohost-dim);border-radius:var(--r-sm);padding:8px;text-align:center;min-width:70px"><div style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:16px;font-weight:600;color:var(--cohost)">${prof.cohost}</div><div style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:9px;color:var(--text-muted);margin-top:2px;text-transform:uppercase;letter-spacing:.06em">Co-Host</div></div>`:''}
+      ${prof.attendee?`<div style="flex:1;background:var(--attendee-dim);border:1px solid var(--attendee-dim);border-radius:var(--r-sm);padding:8px;text-align:center;min-width:70px"><div style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:16px;font-weight:600;color:var(--attendee)">${prof.attendee}</div><div style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:9px;color:var(--text-muted);margin-top:2px;text-transform:uppercase;letter-spacing:.06em">Attendee</div></div>`:''}
     </div>
 
     <div class="profile-section-title">Activity &mdash; last 8 weeks</div>
-
-    <div class="activity-graph" id="actGraph">
-      ${graphBars}
-    </div>
-
-    <div class="activity-week-labels">
-      ${weekLabels}
-    </div>
+    <div class="activity-graph" id="actGraph">${graphBars}</div>
+    <div class="activity-week-labels">${weekLabels}</div>
 
     <div style="margin-top:16px;">
-
-      <div class="profile-meta-row">
-        <span class="profile-meta-key">Last active</span>
-        <span class="profile-meta-val">${lastActive}</span>
-      </div>
-
-      <div class="profile-meta-row">
-        <span class="profile-meta-key">Best streak</span>
-        <span class="profile-meta-val">
-          ${streak} event${streak!==1?'s':''}
-        </span>
-      </div>
-
+      <div class="profile-meta-row"><span class="profile-meta-key">Last active</span><span class="profile-meta-val">${lastActive}</span></div>
+      <div class="profile-meta-row"><span class="profile-meta-key">Best streak</span><span class="profile-meta-val">${streak} event${streak!==1?'s':''}</span></div>
     </div>
 
-    ${
-      recent.length
-        ? `<div style="margin-top:14px;">
-            <div class="profile-section-title" style="margin-bottom:8px">
-              Recent events
-            </div>
-            ${recentHtml}
-          </div>`
-        : ''
-    }
-
+    ${recent.length?`<div style="margin-top:14px;"><div class="profile-section-title" style="margin-bottom:8px">Recent events</div>${recentHtml}</div>`:''}
     ${adjHtml}
     ${warnHtml}
 
     <div class="modal-actions">
-
-      <button
-        class="btn-secondary"
-        id="shareBtn"
-        title="${state.webhookUrl?'Send these stats to the configured Discord webhook':'No webhook configured'}"
-      >
-        <svg class="icon" aria-hidden="true">
-          <use href="#i-brand-discord"></use>
-        </svg>
-        Share
-      </button>
-
-      <button
-        class="btn-confirm"
-        id="confirmBtn"
-        style="background:var(--surface-raised);color:var(--text);border:1px solid var(--border-light)"
-      >
-        Close
-      </button>
-
+      <button class="btn-secondary" id="shareBtn" title="${state.webhookUrl?'Send these stats to the configured Discord webhook':'No webhook configured'}"><svg class="icon" aria-hidden="true"><use href="#i-brand-discord"></use></svg> Share</button>
+      <button class="btn-confirm" id="confirmBtn" style="background:var(--surface-raised);color:var(--text);border:1px solid var(--border-light)">Close</button>
     </div>`,
-
-    ()=>{
-      g('confirmBtn').onclick=closeModal;
-
-      const addWarnBtn=g('addWarnBtn');
-
-      if(addWarnBtn)
-        addWarnBtn.addEventListener(
-          'click',
-          ()=>{
-            closeModal();
-            openAddWarningModal(
-              key,
-              prof.username,
-              prof.discordId
-            );
-          }
-        );
-
-      const clearWarnBtn=g('clearWarnBtn');
-
-      if(clearWarnBtn)
-        clearWarnBtn.addEventListener(
-          'click',
-          ()=>{
-            closeModal();
-            clearWarnings(
-              key,
-              name
-            );
-          }
-        );
-
-      const shareBtn=g('shareBtn');
-
-      if(shareBtn){
-        shareBtn.addEventListener(
-          'click',
-          async()=>{
-            if(!state.webhookUrl){
-              showToast(
-                'No webhook configured. Add one in Webhook settings.',
-                true
-              );
-              return;
-            }
-
-            const origHtml=shareBtn.innerHTML;
-
-            shareBtn.disabled=true;
-
-            shareBtn.innerHTML=
-              '<svg class="icon spin" aria-hidden="true"><use href="#i-loader-2"></use></svg> Sending...';
-
-            const ok=await sendProfileToWebhook(key);
-
-            if(ok){
-              shareBtn.innerHTML=
-                '<svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg> Sent';
-
-              shareBtn.classList.add('sent');
-
-              showToast(
-                `${name}'s stats sent to Discord.`
-              );
-
-              setTimeout(
-                ()=>{
-                  shareBtn.disabled=false;
-                  shareBtn.innerHTML=origHtml;
-                  shareBtn.classList.remove('sent');
-                },
-                2200
-              );
-
-            }else{
-
-              shareBtn.innerHTML=
-                '<svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg> Failed';
-
-              showToast(
-                'Could not send to Discord.',
-                true
-              );
-
-              setTimeout(
-                ()=>{
-                  shareBtn.disabled=false;
-                  shareBtn.innerHTML=origHtml;
-                },
-                2200
-              );
-            }
-          }
-        );
-      }
-
-      const bars=
-        g('actGraph')?.querySelectorAll(
-          '.activity-bar'
-        );
-
-      if(bars){
-        bars.forEach(
-          b=>{
-            const h=b.style.height;
-            b.style.height='0';
-
-            requestAnimationFrame(
-              ()=>{
-                b.style.transition=
-                  'height .5s cubic-bezier(.22,.61,.36,1)';
-
-                b.style.height=h;
-              }
-            );
-          }
-        );
-      }
+  ()=>{
+    g('confirmBtn').onclick=closeModal;
+    const addWarnBtn=g('addWarnBtn');
+    if(addWarnBtn)addWarnBtn.addEventListener('click',()=>{closeModal();openAddWarningModal(key,prof.username,prof.discordId);});
+    const clearWarnBtn=g('clearWarnBtn');
+    if(clearWarnBtn)clearWarnBtn.addEventListener('click',()=>{closeModal();clearWarnings(key,name);});
+    const shareBtn=g('shareBtn');
+    if(shareBtn){
+      shareBtn.addEventListener('click',async()=>{
+        if(!state.webhookUrl){showToast('No webhook configured. Add one in Webhook settings.',true);return;}
+        const origHtml=shareBtn.innerHTML;
+        shareBtn.disabled=true;shareBtn.innerHTML='<svg class="icon spin" aria-hidden="true"><use href="#i-loader-2"></use></svg> Sending...';
+        const ok=await sendProfileToWebhook(key);
+        if(ok){
+          shareBtn.innerHTML='<svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg> Sent';
+          shareBtn.classList.add('sent');
+          showToast(`${name}'s stats sent to Discord.`);
+          setTimeout(()=>{shareBtn.disabled=false;shareBtn.innerHTML=origHtml;shareBtn.classList.remove('sent');},2200);
+        }else{
+          shareBtn.innerHTML='<svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg> Failed';
+          showToast('Could not send to Discord.',true);
+          setTimeout(()=>{shareBtn.disabled=false;shareBtn.innerHTML=origHtml;},2200);
+        }
+      });
     }
-  );
+    const bars=g('actGraph')?.querySelectorAll('.activity-bar');
+    if(bars){bars.forEach(b=>{const h=b.style.height;b.style.height='0';requestAnimationFrame(()=>{b.style.transition='height .5s cubic-bezier(.22,.61,.36,1)';b.style.height=h;});});}
+  });
 }
 
 /* Remove person */
