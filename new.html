@@ -1781,7 +1781,18 @@ g('addPersonnelBtn').addEventListener('click',addFromPersonnelForm);
 
 /* Edit personnel — also works for people who only exist inside events.
    If there's no roster record for the key, this creates one (prefilled from
-   whatever the events know about them) so they can finally get a rank. */
+   whatever the events know about them) so they can finally get a rank.
+
+   IMPORTANT: the "key" a person is identified by is derived from their
+   discordId (preferred) or username (fallback) — see personKey()/personnelKey().
+   If this modal changes that identity (e.g. someone who only had a username
+   in events now gets a Discord ID typed in here), the computed key changes.
+   Every place in the app that looks this person up — event roster pills,
+   the roster page, profiles, warnings, adjustments — keys off whatever
+   identity is stored on THAT record. So when the identity changes here we
+   propagate it into every event entry (and adjustment/warning) that used
+   to resolve to the old key, keeping everything pointed at the same person
+   instead of silently splitting into two "people". */
 function openEditPersonnelModal(key,onSaved){
   let rec=findPersonnel(key);
   const isNew=!rec;
@@ -1808,6 +1819,7 @@ function openEditPersonnelModal(key,onSaved){
       const username=g('editPName').value.trim(),discordId=g('editPId').value.trim(),rank=g('editPRank').value;
       if(!username&&!discordId){showToast('Username or ID is required.',true);return;}
       const oldLabel=rec.username||rec.discordId||'Unknown';
+      const oldKey=key; /* identity this modal was opened with */
       const newKey=(discordId||username).toLowerCase();
       if(isNew){
         const already=findPersonnel(newKey);
@@ -1815,6 +1827,24 @@ function openEditPersonnelModal(key,onSaved){
         else state.personnel.push({id:uid(),username,discordId,rank});
       }else{
         rec.username=username;rec.discordId=discordId;rec.rank=rank;
+      }
+      /* Identity changed (e.g. a Discord ID was added for someone events only
+         knew by username) — propagate it everywhere else that still resolves
+         to the old key, so the roster, event rosters, profile and history
+         all stay pointed at the same person instead of splitting in two. */
+      if(newKey!==oldKey){
+        for(const ev of state.events){
+          for(const role of['host','cohost','attendee']){
+            for(const p of(ev[role]||[])){
+              if(personKey(p)===oldKey){
+                p.username=username;
+                p.discordId=discordId;
+              }
+            }
+          }
+        }
+        state.adjustments.forEach(a=>{if(a.key===oldKey){a.key=newKey;a.username=username;a.discordId=discordId;}});
+        state.warnings.forEach(w=>{if(w.key===oldKey){w.key=newKey;w.username=username;w.discordId=discordId;}});
       }
       closeModal();saveEvents();render();if(activeView==='personnel')renderPersonnelPage();
       sendWebhook(isNew?'add':'edit',isNew
