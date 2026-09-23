@@ -607,6 +607,12 @@ button.primary:hover{background:#4fa9ff;box-shadow:0 1px 0 rgba(255,255,255,.18)
 }
 
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;}}
+
+/* ---- Profile event-history additions ---- */
+.profile-events-list{display:flex;flex-direction:column;}
+.profile-events-list.expanded{max-height:340px;overflow-y:auto;padding-right:4px;}
+.profile-ev-filters{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0 10px;}
+.profile-ev-filters .chip{padding:3px 10px;font-size:11px;}
 </style>
 </head>
 <body>
@@ -2089,6 +2095,19 @@ function openProfileModal(key){
   const streak=personStreak(key);
   const onRoster=prof.onRoster;
 
+  /* ---- Extended history stats: first active date, avg pts/event, division event count ---- */
+  let firstActive=null;
+  for(const ev of state.events){
+    if(!prof.eventSet.has(ev.id))continue;
+    const d=parseEventDate(ev);
+    if(d&&(!firstActive||d<firstActive))firstActive=d;
+  }
+  const firstActiveLabel=firstActive?firstActive.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}):'&mdash;';
+  const allEventDetails=[...prof.eventDetails].reverse(); /* newest first */
+  const pointsFromEvents=allEventDetails.reduce((s,e)=>s+ROLE_POINTS[e.role]*(e.multiplier||1),0);
+  const avgPtsPerEvent=prof.eventCount?Math.round((pointsFromEvents/prof.eventCount)*10)/10:0;
+  const divisionEventsCount=allEventDetails.filter(e=>e.multiplier>1).length;
+
   const graphBars=weeks.map((w,i)=>{
     const p=Math.round((w.pts/maxPts)*100);
     const isRecent=(i===weeks.length-1);
@@ -2099,14 +2118,20 @@ function openProfileModal(key){
   }).join('');
   const weekLabels=weeks.map((w,i)=>`<div class="activity-week-label">${i===weeks.length-1?'now':i===0?w.label:''}</div>`).join('');
 
-  const recent=[...prof.eventDetails].reverse().slice(0,5);
-  const recentHtml=recent.map(ev=>{
-    const rc={host:'var(--host)',cohost:'var(--cohost)',attendee:'var(--attendee)'};
-    return `<div class="profile-meta-row">
-      <span class="profile-meta-key">${esc(ev.evName)}${ev.multiplier>1?` <span style="color:var(--rank)">&middot; ${esc(DIVISION_LABELS[ev.division]||'Div')} 2&times;</span>`:''}</span>
-      <span style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10px;padding:2px 7px;border-radius:2px;background:${rc[ev.role]}14;color:${rc[ev.role]}">${ev.role}</span>
+  /* Row renderer for the event history list — used for both the collapsed
+     5-item preview and the fully expanded, filterable list. */
+  const rc={host:'var(--host)',cohost:'var(--cohost)',attendee:'var(--attendee)'};
+  function eventRowHtml(ev){
+    const pts=ROLE_POINTS[ev.role]*(ev.multiplier||1);
+    return `<div class="profile-meta-row" data-role="${ev.role}">
+      <span class="profile-meta-key">${esc(ev.evName)}${ev.multiplier>1?` <span style="color:var(--rank)">&middot; ${esc(DIVISION_LABELS[ev.division]||'Div')} 2&times;</span>`:''}${ev.date?` <span style="color:var(--text-muted);font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10px">&middot; ${esc(ev.date)}</span>`:''}</span>
+      <span style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+        <span style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10px;color:var(--text-muted)">${pts}pt</span>
+        <span style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10px;padding:2px 7px;border-radius:2px;background:${rc[ev.role]}14;color:${rc[ev.role]}">${ev.role}</span>
+      </span>
     </div>`;
-  }).join('');
+  }
+  const previewHtml=allEventDetails.slice(0,5).map(eventRowHtml).join('');
 
   const warnList=warningsFor(key);
   const warnCount=warnList.length;
@@ -2185,11 +2210,28 @@ function openProfileModal(key){
     <div class="activity-week-labels">${weekLabels}</div>
 
     <div style="margin-top:16px;">
+      <div class="profile-meta-row"><span class="profile-meta-key">First active</span><span class="profile-meta-val">${firstActiveLabel}</span></div>
       <div class="profile-meta-row"><span class="profile-meta-key">Last active</span><span class="profile-meta-val">${lastActive}</span></div>
       <div class="profile-meta-row"><span class="profile-meta-key">Best streak</span><span class="profile-meta-val">${streak} event${streak!==1?'s':''}</span></div>
+      <div class="profile-meta-row"><span class="profile-meta-key">Avg. points / event</span><span class="profile-meta-val">${avgPtsPerEvent}</span></div>
+      ${divisionEventsCount?`<div class="profile-meta-row"><span class="profile-meta-key">Division events</span><span class="profile-meta-val" style="color:var(--rank)">${divisionEventsCount}</span></div>`:''}
     </div>
 
-    ${recent.length?`<div style="margin-top:14px;"><div class="profile-section-title" style="margin-bottom:8px">Recent events</div>${recentHtml}</div>`:''}
+    ${allEventDetails.length?`<div style="margin-top:14px;">
+      <div class="profile-section-title" style="margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+        <span>Event History</span>
+        <span style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10px;color:var(--text-muted)">${allEventDetails.length} total</span>
+      </div>
+      ${allEventDetails.length>1?`<div class="profile-ev-filters" id="profileEvFilters">
+        <button class="chip on" data-rf="all">All</button>
+        ${prof.host?`<button class="chip" data-rf="host">Host <span class="cnum">${prof.host}</span></button>`:''}
+        ${prof.cohost?`<button class="chip" data-rf="cohost">Co-Host <span class="cnum">${prof.cohost}</span></button>`:''}
+        ${prof.attendee?`<button class="chip" data-rf="attendee">Attendee <span class="cnum">${prof.attendee}</span></button>`:''}
+      </div>`:''}
+      <div class="profile-events-list" id="profileEventsList" data-expanded="0">${previewHtml}</div>
+      ${allEventDetails.length>5?`<button class="add-row" id="toggleEventsBtn" style="margin-top:6px">Show all ${allEventDetails.length} events</button>`:''}
+    </div>`:''}
+
     ${adjHtml}
     ${warnHtml}
 
@@ -2212,6 +2254,35 @@ function openProfileModal(key){
     if(addWarnBtn)addWarnBtn.addEventListener('click',()=>{closeModal();openAddWarningModal(key,prof.username,prof.discordId);});
     const clearWarnBtn=g('clearWarnBtn');
     if(clearWarnBtn)clearWarnBtn.addEventListener('click',()=>{closeModal();clearWarnings(key,name);});
+
+    /* Event history: expand/collapse + role filter, both operating on the
+       same in-memory list so they can be combined freely. */
+    let evExpanded=false,evFilter='all';
+    const evListEl=g('profileEventsList'),toggleBtn=g('toggleEventsBtn'),filterWrap=g('profileEvFilters');
+    function renderEvList(){
+      if(!evListEl)return;
+      const filtered=evFilter==='all'?allEventDetails:allEventDetails.filter(e=>e.role===evFilter);
+      const shown=evExpanded?filtered:filtered.slice(0,5);
+      evListEl.innerHTML=shown.length?shown.map(eventRowHtml).join(''):`<div style="font-size:11px;color:var(--text-muted);font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;padding:8px 0">No events for this filter.</div>`;
+      evListEl.classList.toggle('expanded',evExpanded);
+      evListEl.dataset.expanded=evExpanded?'1':'0';
+      if(toggleBtn){
+        if(filtered.length>5){
+          toggleBtn.style.display='';
+          toggleBtn.textContent=evExpanded?'Show less':`Show all ${filtered.length} events`;
+        }else{
+          toggleBtn.style.display='none';
+        }
+      }
+    }
+    if(toggleBtn)toggleBtn.addEventListener('click',()=>{evExpanded=!evExpanded;renderEvList();});
+    if(filterWrap)filterWrap.addEventListener('click',e=>{
+      const btn=e.target.closest('.chip');if(!btn)return;
+      evFilter=btn.dataset.rf;evExpanded=false;
+      [...filterWrap.children].forEach(c=>c.classList.toggle('on',c===btn));
+      renderEvList();
+    });
+
     const shareBtn=g('shareBtn');
     if(shareBtn){
       shareBtn.addEventListener('click',async()=>{
@@ -2590,7 +2661,16 @@ function inactiveList(){
     const w=weeksSinceActive(key);
     if(w===null||w>=limit){
       const prof=buildProfile(key);
-      out.push({key,name:prof.username||prof.discordId||'Unknown',weeks:w,rank:prof.rank});
+      out.push({
+        key,
+        name:prof.username||prof.discordId||'Unknown',
+        discordId:prof.discordId||'',
+        weeks:w,
+        rank:prof.rank,
+        onRoster:prof.onRoster,
+        lastActive:prof.lastActive,
+        eventCount:prof.eventCount
+      });
     }
   }
   return out.sort((a,b)=>(b.weeks===null?999:b.weeks)-(a.weeks===null?999:a.weeks));
@@ -2796,13 +2876,36 @@ function renderAnalytics(){
     }).join('');
   };
 
-  const inactive=inactiveList().slice(0,8);
-  const inactiveHtml=inactive.length?inactive.map(p=>`
-    <div class="an-row" onclick="openProfileModal('${esc(p.key)}')">
-      <span class="nm">${esc(p.name)}</span>
+  const inactiveAll=inactiveList();
+  const inactiveNeverCount=inactiveAll.filter(p=>p.weeks===null).length;
+  const inactiveLongestGap=inactiveAll.reduce((m,p)=>p.weeks!==null&&p.weeks>m?p.weeks:m,0);
+  const inactiveThreshold=state.settings.inactiveWeeks||3;
+  function inactiveRowHtml(p){
+    const sevClass=p.weeks===null?'bad':p.weeks>=inactiveThreshold*2?'bad':'warn';
+    const lastLbl=p.lastActive?p.lastActive.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'never logged';
+    return `<div class="an-row" onclick="openProfileModal('${esc(p.key)}')">
+      <span class="nm">${esc(p.name)}${!p.onRoster?` <span style="color:var(--text-muted);font-size:10px;font-weight:400">(no roster)</span>`:''}</span>
       ${p.rank?`<span class="rank-badge sm">${esc(p.rank)}</span>`:''}
-      <span class="an-pill ${p.weeks===null?'bad':p.weeks>=6?'bad':'warn'}">${p.weeks===null?'never':`${p.weeks}w ago`}</span>
-    </div>`).join(''):`<div class="an-empty">Everyone's been active recently.</div>`;
+      <span style="font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:10px;color:var(--text-muted);white-space:nowrap;flex-shrink:0">${lastLbl}</span>
+      <span class="an-pill ${sevClass}">${p.weeks===null?'never':`${p.weeks}w ago`}</span>
+    </div>`;
+  }
+  const inactiveWatchHtml=`<div class="an-card wide">
+    <div class="an-card-title">
+      <span>Inactivity watch &mdash; ${inactiveThreshold}+ weeks quiet</span>
+      <span style="color:${inactiveAll.length?'var(--host)':'var(--attendee)'}">${inactiveAll.length} flagged</span>
+    </div>
+    ${inactiveAll.length?`
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:-2px 0 12px;font-family:ui-monospace,'SF Mono','SFMono-Regular',Menlo,monospace;font-size:11px;color:var(--text-dim)">
+      <span><b style="color:var(--text)">${inactiveAll.length}</b> total</span>
+      ${inactiveNeverCount?`<span><b style="color:var(--danger)">${inactiveNeverCount}</b> never attended</span>`:''}
+      ${inactiveLongestGap?`<span><b style="color:var(--host)">${inactiveLongestGap}w</b> longest gap</span>`:''}
+      <button id="copyInactiveBtn" style="margin-left:auto;background:none;border:none;color:var(--accent);cursor:pointer;text-decoration:underline;font-family:inherit;font-size:inherit;padding:0">copy names</button>
+    </div>
+    <div id="inactiveListWrap" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;padding-right:2px">
+      ${inactiveAll.map(inactiveRowHtml).join('')}
+    </div>`:`<div class="an-empty">Everyone's been active recently.</div>`}
+  </div>`;
 
   const q=state.settings.weeklyQuota||0;
   let quotaHtml='';
@@ -2855,6 +2958,11 @@ function renderAnalytics(){
         <div class="an-big" style="color:${unrosteredPeople().length?'var(--host)':'var(--attendee)'}">${state.personnel.length}</div>
         <div class="an-sub">${unrosteredPeople().length?`${unrosteredPeople().length} in events without a record`:'everyone in events is on the roster'}</div>
       </div>
+      <div class="an-card">
+        <div class="an-card-title">Inactivity</div>
+        <div class="an-big" style="color:${inactiveAll.length?'var(--host)':'var(--attendee)'}">${inactiveAll.length}</div>
+        <div class="an-sub">${inactiveAll.length?`quiet ${inactiveThreshold}+ weeks &middot; ${inactiveNeverCount} never attended`:'nobody flagged right now'}</div>
+      </div>
 
       <div class="an-card wide">
         <div class="an-card-title"><span>Events per week &mdash; last 12</span><span style="color:var(--text-muted)">hover for detail</span></div>
@@ -2883,18 +2991,23 @@ function renderAnalytics(){
         <div class="an-card-title">Most hosting</div>
         ${rowsFor(topBy('hosting',5),'hosting')}
       </div>
-      <div class="an-card">
-        <div class="an-card-title"><span>Inactive ${state.settings.inactiveWeeks||3}+ weeks</span><span style="color:var(--host)">${inactive.length||''}</span></div>
-        ${inactiveHtml}
-      </div>
       ${promoHtml}
       ${quotaHtml}
+      ${inactiveWatchHtml}
     </div>`;
 
   box.querySelectorAll('.an-bar').forEach(b=>{
     const hgt=b.style.height;b.style.height='0';
     requestAnimationFrame(()=>{b.style.height=hgt;});
   });
+
+  const copyInactiveBtn=g('copyInactiveBtn');
+  if(copyInactiveBtn){
+    copyInactiveBtn.addEventListener('click',()=>{
+      const names=inactiveAll.map(p=>p.discordId?`<@${p.discordId}>`:p.name).join(', ');
+      navigator.clipboard.writeText(names).then(()=>showToast('Inactive list copied.')).catch(()=>showToast('Copy failed.',true));
+    });
+  }
 }
 
 /* Keyboard shortcuts help */
