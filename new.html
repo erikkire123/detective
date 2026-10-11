@@ -783,9 +783,11 @@ button.primary:hover{background:#4fa9ff;box-shadow:0 1px 0 rgba(255,255,255,.18)
 <div class="toast" id="toast"></div>
 
 <script>
-const BIN_ID='6a3d2bacda38895dfefd5e8e';
-const API_KEY='$2a$10$9dKNzVl1cUjZzcndX/LDp.kK8zdWOWnDTklDrWJTGZ0vGN7Jjdy6K';
-const BASE=`https://api.jsonbin.io/v3/b/${BIN_ID}`;
+const SB_URL='https://jgbcrqwypdxotestavqc.supabase.co';
+const SB_KEY='sb_publishable_nSMNLemdNnFIcleUHDkY8A_AfQo7Hb-';
+const SB_ROW=`${SB_URL}/rest/v1/app_state?id=eq.1`;
+const SB_HEADERS={'apikey':SB_KEY,'Content-Type':'application/json'};
+  
 const DEFAULT_LOG_WEBHOOK='https://discord.com/api/webhooks/1530968288346243275/yieo-SryJbsjR-xYDfbRVDa6w4Oi5_WCaFakQcj3XPyXWAJuk5u1AwFZ19QpPEkHQF39';
 const DEFAULT_EVENT_WEBHOOK='https://discord.com/api/webhooks/1530968508425306293/ZijwtqhkQlzxGvgpc_raKnOyn74iylZBuVo30D12570FNAnt76vPA91a2tnTbLsDgg9u';
 const DEFAULT_SETTINGS={weeklyQuota:0,inactiveWeeks:3};
@@ -1241,9 +1243,9 @@ function adminCodeInProgress(key){
 async function loadEvents(){
   setStatus('saving');g('statusText').textContent='syncing...';
   try{
-    const r=await fetch(`${BASE}/latest`,{headers:{'X-Master-Key':API_KEY}});
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    const d=await r.json();const rec=d.record;
+   const r=await fetch(`${SB_ROW}&select=data`,{headers:SB_HEADERS});
+if(!r.ok)throw new Error('HTTP '+r.status);
+const rows=await r.json();const rec=rows[0]?.data||{};
     state.events=Array.isArray(rec)?rec:Array.isArray(rec?.events)?rec.events:[];
     state.personnel=Array.isArray(rec?.personnel)?rec.personnel:[];
     state.webhookUrl=(typeof rec?.webhookUrl==='string'&&rec.webhookUrl)?rec.webhookUrl:DEFAULT_LOG_WEBHOOK;
@@ -1260,8 +1262,16 @@ async function loadEvents(){
 async function saveEvents(){
   setStatus('saving');g('statusText').textContent='saving...';
   try{
-    const r=await fetch(BASE,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':API_KEY},body:JSON.stringify({events:state.events,personnel:state.personnel,webhookUrl:state.webhookUrl,eventWebhookUrl:state.eventWebhookUrl,adjustments:state.adjustments,warnings:state.warnings,settings:state.settings})});
-    if(!r.ok)throw new Error('HTTP '+r.status);
+    const r=await fetch(SB_ROW,{
+      method:'PATCH',
+      headers:{...SB_HEADERS,'Prefer':'return=minimal'},
+      body:JSON.stringify({data:{events:state.events,personnel:state.personnel,webhookUrl:state.webhookUrl,eventWebhookUrl:state.eventWebhookUrl,adjustments:state.adjustments,warnings:state.warnings,settings:state.settings},updated_at:new Date().toISOString()})
+    });
+    if(!r.ok){
+      const body=await r.text();
+      console.error('Supabase said:',r.status,body);
+      throw new Error('HTTP '+r.status+' '+body);
+    }
     g('statusText').textContent='operational';setStatus('ok');pingStatus();
   }catch(e){
     console.error(e);g('statusText').textContent='save failed';setStatus('err');
@@ -3234,3 +3244,4 @@ loadEvents();
 </script>
 </body>
 </html>
+
