@@ -440,10 +440,10 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
    JSONBin (API Keys -> Access Keys -> Read permission on this bin)
    and paste it into ACCESS_KEY below.
    ============================================================ */
-const BIN_ID='6a3d2bacda38895dfefd5e8e';
-const ACCESS_KEY='';   // <- read-only Access Key (leave '' if the bin is public)
+const SB_URL='https://jgbcrqwypdxotestavqc.supabase.co';
+const SB_KEY='sb_publishable_nSMNLemdNnFIcleUHDkY8A_AfQo7Hb-';   // same publishable key as the editor page
 const REFRESH_MS=60000;
-const BASE=`https://api.jsonbin.io/v3/b/${BIN_ID}`;
+const SB_ROW=`${SB_URL}/rest/v1/app_state?id=eq.1&select=data`;
 
 let state={events:[],personnel:[],adjustments:[],settings:{weeklyQuota:0,inactiveWeeks:3}};
 let eventFilterQuery='',eventSort='newest',eventChipFilter='all',activeView='events';
@@ -620,10 +620,9 @@ let firstLoad=true;
 async function loadEvents(){
   if(firstLoad){setStatus('saving');g('statusText').textContent='syncing...';}
   try{
-    const headers=ACCESS_KEY?{'X-Access-Key':ACCESS_KEY}:{};
-    const r=await fetch(`${BASE}/latest`,{headers,cache:'no-store'});
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    const rec=(await r.json()).record;
+   const r=await fetch(SB_ROW,{headers:{'apikey':SB_KEY},cache:'no-store'});
+if(!r.ok)throw new Error('HTTP '+r.status);
+const rec=(await r.json())[0]?.data||{};
     state.events=Array.isArray(rec)?rec:Array.isArray(rec?.events)?rec.events:[];
     state.personnel=Array.isArray(rec?.personnel)?rec.personnel:[];
     state.adjustments=Array.isArray(rec?.adjustments)?rec.adjustments:[];
